@@ -50,7 +50,6 @@ const Indexer *Crawler::getIndexer() const
 void Crawler::loadNextPage()
 {
 	qDebug("Crawler::loadNextPage");
-	QUrl nextURL;
 	if (mURLListActive->isEmpty())
 	{
 		swapURLLists();
@@ -60,8 +59,8 @@ void Crawler::loadNextPage()
 			return;
 		}
 	}
-	nextURL = mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
-	qDebug() << nextURL;
+	QUrl nextURL = mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
+	qDebug() << nextURL.toString();
 	sUnwantedLinksMutex.lock();
 	sVisitedURLList.insert(nextURL.toString());
 	sUnwantedLinksMutex.unlock();
@@ -77,19 +76,18 @@ void Crawler::onPageProcessingFinished()
 {
 	qDebug("Crawler::onPageProcessingFinished");
 
-	QString pageURL = mWebPageProcessor->getPageURLEncoded();
-	QString pageContentText = mWebPageProcessor->getPageContentAsTEXT();
-	QByteArray pageContentHtml=mWebPageProcessor->getPageContentAsHTML().toUtf8();
-	QList<QUrl> pageLinksList = mWebPageProcessor->getPageLinks();
+	const QString &pageContentText = mWebPageProcessor->getPageContentAsTEXT();
+	const QString &pageContentHtml = mWebPageProcessor->getPageContentAsHTML();
+	const QList<QUrl> &pageLinksList = mWebPageProcessor->getPageLinks();
 	PageMetadata pageMetadata;
 
-	qDebug() << pageURL;
-
-	pageMetadata.contentHash=xorshift_hash_64((uint8_t *)pageContentHtml.data(), pageContentHtml.size());
+	pageMetadata.contentHash = xorshift_hash_64((const uint8_t *)pageContentHtml.toStdString().data(), pageContentHtml.toStdString().size());
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
-	pageMetadata.url = mWebPageProcessor->getPageURL();
+	pageMetadata.url = mWebPageProcessor->getPageURLEncoded();
 	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
+
+	qDebug() << pageMetadata.url;
 
 	emit needToIndexNewPage(pageMetadata);
 
@@ -99,7 +97,7 @@ void Crawler::onPageProcessingFinished()
 	QFile pageHTMLFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".html"));
 	if (pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
-		pageHTMLFile.write(pageContentHtml);
+		pageHTMLFile.write(pageContentHtml.toUtf8());
 		pageHTMLFile.close();
 	}
 	else
@@ -123,7 +121,7 @@ void Crawler::onPageProcessingFinished()
 	{
 		for(const QUrl &link : pageLinksList)
 		{
-			pageLinksFile.write(link.toString().toUtf8() +QByteArray("\n"));
+			pageLinksFile.write(link.toString().toUtf8()+QByteArray("\n"));
 		}
 		pageLinksFile.close();
 	}

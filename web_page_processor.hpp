@@ -15,23 +15,24 @@ class WebPageProcessor : public QObject
 	QString mPageContentHTML;
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;
+	void createNewWebPage();
 private slots:
-	void extractPageContentHTML(bool ok);
 	void extractPageContentTEXT(bool ok);
+	void extractPageContentHTML(bool ok);
 	void extractPageLinks();
 public:
 	WebPageProcessor(QObject *parent=nullptr);
+	void setHttpUserAgent(const QString &user_agent);
 	void loadCookiesFromFireFoxProfile(const QString &path_to_file);
 	void loadCookiesFromFireFoxDB(const QString &path_to_file);
 	void loadPage(const QUrl &url);
-	QString getPageContentAsHTML() const;
-	QString getPageContentAsTEXT() const;
+	const QString &getPageContentAsHTML() const;
+	const QString &getPageContentAsTEXT() const;
 	QString getPageTitle() const;
-	QUrl getPageURL() const;
 	QByteArray getPageURLEncoded() const;
-	QList<QUrl> getPageLinks() const;
+	const QList<QUrl> &getPageLinks() const;
 signals:
-	void pageLoadingFinished();
+	void pageLoadingSuccess();
 	void pageProcessingFinished();
 };
 

@@ -14,30 +14,51 @@
 
 #include "web_page_processor.hpp"
 
-void WebPageProcessor::extractPageContentHTML(bool ok)
+void WebPageProcessor::createNewWebPage()
 {
-	if(!ok)
+	if(mWebPage)
 	{
-		return;
+		disconnect(mWebPage, nullptr, nullptr, nullptr);
+		mWebPage->deleteLater();
 	}
-	mWebPage->toHtml(
-		[this](const QString &html)
-		{
-			this->mPageContentHTML = html;
-			emit pageLoadingFinished();
-		});
+	mWebPage=new QWebEnginePage(mProfile, this);
+	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentTEXT);
+	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentHTML);
 }
 
 void WebPageProcessor::extractPageContentTEXT(bool ok)
 {
 	if(!ok)
 	{
+		// TODO: process page loading error
 		return;
 	}
 	mWebPage->toPlainText(
 		[this](const QString &text)
 		{
 			this->mPageContentTEXT = text;
+			if(!this->mPageContentHTML.isEmpty())
+			{
+				emit pageLoadingSuccess();
+			}
+		});
+}
+
+void WebPageProcessor::extractPageContentHTML(bool ok)
+{
+	if(!ok)
+	{
+		// TODO: process page loading error
+		return;
+	}
+	mWebPage->toHtml(
+		[this](const QString &html)
+		{
+			this->mPageContentHTML = html;
+			if(!this->mPageContentTEXT.isEmpty())
+			{
+				emit pageLoadingSuccess();
+			}
 		});
 }
 
@@ -47,8 +68,7 @@ void WebPageProcessor::extractPageLinks()
 	HTML::ParserDom parser;
 	parser.parseTree(mPageContentHTML.toStdString());
 	const tree<HTML::Node> &domTree=parser.getTree();
-	QUrl baseUrl=getPageURL();
-	mPageLinks.clear();
+	QUrl baseUrl=mWebPage->url();
 	for (HTML::Node &domNode : domTree)
 	{
 		if (domNode.isTag())
@@ -94,14 +114,23 @@ void WebPageProcessor::extractPageLinks()
 
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
-	mProfile = new QWebEngineProfile(this);
-	mProfile->setHttpCacheType(QWebEngineProfile::NoCache);
-	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0");
+	mWebPage=nullptr;
+	mProfile=new QWebEngineProfile(this);
+	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	mWebPage=new QWebEnginePage(mProfile, this);
-	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentTEXT);
-	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentHTML);
-	connect(this, &WebPageProcessor::pageLoadingFinished, this, &WebPageProcessor::extractPageLinks);
+	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0");
+	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
+	createNewWebPage();
+}
+
+void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
+{
+	if(user_agent.isEmpty())
+	{
+		return;
+	}
+	mProfile->setHttpUserAgent(user_agent);
+	createNewWebPage();
 }
 
 void WebPageProcessor::loadCookiesFromFireFoxProfile(const QString &path_to_file)
@@ -191,15 +220,18 @@ void WebPageProcessor::loadCookiesFromFireFoxDB(const QString &path_to_file)
 
 void WebPageProcessor::loadPage(const QUrl &url)
 {
+	mPageContentHTML.clear();
+	mPageContentTEXT.clear();
+	mPageLinks.clear();
 	mWebPage->load(url);
 }
 
-QString WebPageProcessor::getPageContentAsHTML() const
+const QString &WebPageProcessor::getPageContentAsHTML() const
 {
 	return mPageContentHTML;
 }
 
-QString WebPageProcessor::getPageContentAsTEXT() const
+const QString &WebPageProcessor::getPageContentAsTEXT() const
 {
 	return mPageContentTEXT;
 }
@@ -209,17 +241,12 @@ QString WebPageProcessor::getPageTitle() const
 	return mWebPage->title();
 }
 
-QUrl WebPageProcessor::getPageURL() const
-{
-	return mWebPage->url();
-}
-
 QByteArray WebPageProcessor::getPageURLEncoded() const
 {
 	return mWebPage->url().toEncoded(QUrl::RemoveFragment);
 }
 
-QList<QUrl> WebPageProcessor::getPageLinks() const
+const QList<QUrl> &WebPageProcessor::getPageLinks() const
 {
 	return mPageLinks;
 }

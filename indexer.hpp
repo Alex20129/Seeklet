@@ -12,7 +12,7 @@ struct PageMetadata
 	uint64_t contentHash;
 	QDateTime timeStamp;
 	QString title;
-	QUrl url;
+	QByteArray url;
 	QMap<QString, uint64_t> words;
 };
 
