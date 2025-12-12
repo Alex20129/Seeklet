@@ -29,7 +29,7 @@ public:
 	void load(const QString &db_path);
 	void save(const QString &db_path);
 	void merge(const Indexer &other);
-	QList<PageMetadata> searchByWords(const QStringList &words) const;
+	QVector<const PageMetadata*> searchByWords(const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
 };

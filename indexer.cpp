@@ -53,13 +53,13 @@ void Indexer::merge(const Indexer &other)
 		<< other.localIndexTableOfContents.size() << "words";
 }
 
-QList<PageMetadata> Indexer::searchByWords(const QStringList &words) const
+QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) const
 {
 	qDebug("Indexer::searchWords");
-	QList<PageMetadata> results;
+	QVector<const PageMetadata*> searchResults;
 	if (words.isEmpty())
 	{
-		return results;
+		return searchResults;
 	}
 	QString smallestSetKey;
 	int minSize = INT_MAX;
@@ -68,7 +68,7 @@ QList<PageMetadata> Indexer::searchByWords(const QStringList &words) const
 		QString lowerWord = word.toLower();
 		if (!localIndexTableOfContents.contains(lowerWord))
 		{
-			return results;
+			return searchResults;
 		}
 		if (localIndexTableOfContents[lowerWord].size() < minSize)
 		{
@@ -85,18 +85,19 @@ QList<PageMetadata> Indexer::searchByWords(const QStringList &words) const
 			commonHashes.intersect(localIndexTableOfContents[lowerWord]);
 			if (commonHashes.isEmpty())
 			{
-				return results;
+				return searchResults;
 			}
 		}
 	}
 	for (uint64_t hash : commonHashes)
 	{
-		if (localIndexStorage.contains(hash))
+		const PageMetadata *searchResult=localIndexStorage.value(hash, nullptr);
+		if (searchResult!=nullptr)
 		{
-			results.append(*localIndexStorage[hash]);
+			searchResults.append(searchResult);
 		}
 	}
-	return results;
+	return searchResults;
 }
 
 void Indexer::addPage(const PageMetadata &page_metadata)

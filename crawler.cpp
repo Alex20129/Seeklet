@@ -303,13 +303,13 @@ void Crawler::searchTest()
 	qDebug("Crawler::searchTest");
 	QStringList words;
 	words.append("qtwebengine");
-	const QList<PageMetadata> searchResults=mIndexer->searchByWords(words);
-	for(const PageMetadata &page : searchResults)
+	const QVector<const PageMetadata*> searchResults=mIndexer->searchByWords(words);
+	for(const PageMetadata *page : searchResults)
 	{
-		qDebug() << page.contentHash;
-		qDebug() << page.title;
-		qDebug() << page.timeStamp;
-		qDebug() << page.url;
+		qDebug() << page->contentHash;
+		qDebug() << page->title;
+		qDebug() << page->timeStamp;
+		qDebug() << page->url;
 		qDebug() << "====";
 	}
 }
