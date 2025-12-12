@@ -76,23 +76,24 @@ QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) co
 			smallestSetKey = lowerWord;
 		}
 	}
-	QSet<uint64_t> commonHashes = localIndexTableOfContents[smallestSetKey];
-	for (const QString &word : words)
+	QSet<uint64_t> pageSubsetIntersection = localIndexTableOfContents[smallestSetKey];
+	for(const QString &word : words)
 	{
-		QString lowerWord = word.toLower();
-		if (lowerWord != smallestSetKey)
+		QString lowerWord=word.toLower();
+		if(lowerWord!=smallestSetKey)
 		{
-			commonHashes.intersect(localIndexTableOfContents[lowerWord]);
-			if (commonHashes.isEmpty())
+			const QSet<uint64_t> pageSubset=localIndexTableOfContents.value(lowerWord);
+			pageSubsetIntersection.intersect(pageSubset);
+			if(pageSubsetIntersection.isEmpty())
 			{
 				return searchResults;
 			}
 		}
 	}
-	for (uint64_t hash : commonHashes)
+	for(uint64_t hash : pageSubsetIntersection)
 	{
 		const PageMetadata *searchResult=localIndexStorage.value(hash, nullptr);
-		if (searchResult!=nullptr)
+		if(searchResult!=nullptr)
 		{
 			searchResults.append(searchResult);
 		}
