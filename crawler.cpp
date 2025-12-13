@@ -261,17 +261,17 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QString URLString=url.toString();
-	bool skipThisURL=0;
 	qDebug() << URLString;
+	bool skipThisURL=false;
 	sUnwantedLinksMutex.lock();
 	if (sHostnameBlacklist.contains(url.host()))
 	{
-		skipThisURL=1;
+		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
 	}
 	else if (sVisitedURLList.contains(URLString))
 	{
-		skipThisURL=1;
+		skipThisURL=true;
 		qDebug() << "Skipping visited page";
 	}
 	sUnwantedLinksMutex.unlock();
@@ -295,18 +295,18 @@ void Crawler::addURLToQueue(const QUrl &url)
 	}
 	if(!urlAllowedByZonePrefix)
 	{
-		skipThisURL=1;
+		skipThisURL=true;
 		qDebug() << "Skipping page outside crawling zone";
 	}
 	if(!mAllowedURLSchemes.isEmpty())
 	{
 		if(!mAllowedURLSchemes.contains(url.scheme()))
 		{
-			skipThisURL=1;
+			skipThisURL=true;
 			qDebug() << "Skipping URL due to inacceptable scheme:" << url.scheme();
 		}
 	}
-	if(!skipThisURL)
+	if(skipThisURL!=true)
 	{
 		if(mURLListQueued->contains(url))
 		{
