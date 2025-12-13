@@ -1,7 +1,6 @@
-#include "util.hpp"
-
 #include <QRegularExpression>
 #include <QSet>
+#include "util.hpp"
 
 QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text)
 {
@@ -21,4 +20,24 @@ QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text)
 		}
 	}
 	return wordMap;
+}
+
+uint64_t mwc_hash_64(const QByteArray &data)
+{
+	return mwc_hash_64((const uint8_t *)data.data(), data.size());
+}
+
+uint64_t fnv1a_hash_64(const QByteArray &data)
+{
+	return fnv1a_hash_64((const uint8_t *)data.data(), data.size());
+}
+
+uint64_t xorshift_hash_64(const QByteArray &data)
+{
+	return xorshift_hash_64((const uint8_t *)data.data(), data.size());
+}
+
+uint64_t xorshiftstar_hash_64(const QByteArray &data)
+{
+	return xorshiftstar_hash_64((const uint8_t *)data.data(), data.size());
 }

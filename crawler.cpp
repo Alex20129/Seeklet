@@ -4,7 +4,6 @@
 #include <QJsonArray>
 #include "util.hpp"
 #include "crawler.hpp"
-#include "simple_hash_func.hpp"
 
 QSet<QString> Crawler::sVisitedURLList;
 QSet<QString> Crawler::sHostnameBlacklist;
@@ -171,7 +170,7 @@ void Crawler::onPageProcessingFinished()
 	const QList<QUrl> &pageLinksList = mWebPageProcessor->getPageLinks();
 	PageMetadata pageMetadata;
 
-	pageMetadata.contentHash = xorshift_hash_64((const uint8_t *)pageContentHtml.toStdString().data(), pageContentHtml.toStdString().size());
+	pageMetadata.contentHash = xorshift_hash_64(pageContentHtml.toUtf8());
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded();

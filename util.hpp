@@ -3,7 +3,13 @@
 
 #include <QMap>
 #include <QString>
+#include "simple_hash_func.hpp"
 
 QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text);
+
+uint64_t mwc_hash_64(const QByteArray &data);
+uint64_t fnv1a_hash_64(const QByteArray &data);
+uint64_t xorshift_hash_64(const QByteArray &data);
+uint64_t xorshiftstar_hash_64(const QByteArray &data);
 
 #endif // UTIL_HPP
