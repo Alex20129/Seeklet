@@ -30,7 +30,8 @@ public:
 	static constexpr int PAGE_LOADING_INTERVAL_MAX=4096;
 	Crawler(QObject *parent=nullptr);
 	~Crawler();
-	void setPathToFireFoxProfile(const QString &path_to_ff_profile);
+	int loadSettingsFromJSONFile(const QString &path_to_file);
+	void setPathToFirefoxProfile(const QString &path_to_ff_profile);
 	const Indexer *getIndexer() const;
 	void addURLsToQueue(const QList<QUrl> &urls);
 	void addURLToQueue(const QUrl &url);

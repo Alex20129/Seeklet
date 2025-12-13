@@ -1,4 +1,7 @@
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include "util.hpp"
 #include "crawler.hpp"
 #include "simple_hash_func.hpp"
@@ -37,7 +40,65 @@ void Crawler::swapURLLists()
 	qSwap(mURLListActive, mURLListQueued);
 }
 
-void Crawler::setPathToFireFoxProfile(const QString &path)
+int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
+{
+	QFile crawlerConfigFile(path_to_file);
+
+	if (!crawlerConfigFile.exists())
+	{
+		qDebug() << path_to_file << "doesn't exist";
+		return 22;
+	}
+
+	if(!crawlerConfigFile.open(QIODevice::ReadOnly))
+	{
+		qDebug() << "Couldn't open" << path_to_file;
+		return 33;
+	}
+
+	QByteArray crawlerConfigData=crawlerConfigFile.readAll();
+	crawlerConfigFile.close();
+
+	QJsonParseError err;
+	QJsonDocument crawlerConfigJsonDoc = QJsonDocument::fromJson(crawlerConfigData, &err);
+
+	if (err.error != QJsonParseError::NoError)
+	{
+		qDebug() << "Unable to parse" << path_to_file;
+		qDebug() << err.errorString();
+		return 44;
+	}
+
+	if(!crawlerConfigJsonDoc.isObject())
+	{
+		qDebug() << "Unable to get valid JSON object from" << path_to_file;
+		return 55;
+	}
+
+	QJsonObject rawlerConfigJsonObject = crawlerConfigJsonDoc.object();
+
+	const QJsonArray &startURLs=rawlerConfigJsonObject.value("start_urls").toArray();
+	for (const QJsonValue &startURL : startURLs)
+	{
+		this->addURLToQueue(startURL.toString());
+	}
+
+	const QJsonArray &crawlingZones=rawlerConfigJsonObject.value("crawling_zones").toArray();
+	for (const QJsonValue &crawlingZone : crawlingZones)
+	{
+		this->addCrawlingZone(crawlingZone.toString());
+	}
+
+	const QJsonArray &blHosts=rawlerConfigJsonObject.value("black_list").toArray();
+	for (const QJsonValue &blHost : blHosts)
+	{
+		this->addHostnameToBlacklist(blHost.toString());
+	}
+
+	return 0;
+}
+
+void Crawler::setPathToFirefoxProfile(const QString &path)
 {
 	mPathToFireFoxProfile=path;
 }
