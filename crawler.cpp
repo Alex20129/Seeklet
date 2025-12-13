@@ -30,6 +30,12 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 Crawler::~Crawler()
 {
 	stop();
+	const QList<QStringList*> crawlingZones(mCrawlingZones.values());
+	mCrawlingZones.clear();
+	for(QStringList *crawlingZone : crawlingZones)
+	{
+		delete crawlingZone;
+	}
 	delete mRNG;
 	delete mURLListQueued;
 	delete mURLListActive;
