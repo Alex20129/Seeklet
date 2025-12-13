@@ -79,6 +79,18 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 
 	QJsonObject rawlerConfigJsonObject = crawlerConfigJsonDoc.object();
 
+	QStringList schemes;
+	const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();
+	for (const QJsonValue &allowedURLScheme : allowedURLSchemes)
+	{
+		QString schemeString=allowedURLScheme.toString();
+		if(!schemeString.isEmpty())
+		{
+			schemes.append(schemeString);
+		}
+	}
+	this->setAllowedURLSchemes(schemes);
+
 	const QJsonArray &startURLs=rawlerConfigJsonObject.value("start_urls").toArray();
 	for (const QJsonValue &startURL : startURLs)
 	{
@@ -102,7 +114,16 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 
 void Crawler::setPathToFirefoxProfile(const QString &path)
 {
+	qDebug("Crawler::setPathToFirefoxProfile");
 	mPathToFireFoxProfile=path;
+	qDebug()<<path;
+}
+
+void Crawler::setAllowedURLSchemes(const QStringList &schemes)
+{
+	qDebug("Crawler::setAllowedURLSchemes");
+	mAllowedURLSchemes=schemes;
+	qDebug()<<mAllowedURLSchemes;
 }
 
 const Indexer *Crawler::getIndexer() const
@@ -248,6 +269,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 		qDebug() << "Skipping visited page";
 	}
 	sUnwantedLinksMutex.unlock();
+
 	bool urlAllowedByZonePrefix=1;
 	const QStringList* const zonePrefixList=mCrawlingZones.value(url.host(), nullptr);
 	if(nullptr!=zonePrefixList)
@@ -269,6 +291,11 @@ void Crawler::addURLToQueue(const QUrl &url)
 	{
 		skipThisURL=1;
 		qDebug() << "Skipping page outside crawling zone";
+	}
+	if(!mAllowedURLSchemes.contains(url.scheme()))
+	{
+		skipThisURL=1;
+		qDebug() << "Skipping URL due to inacceptable scheme";
 	}
 	if(!skipThisURL)
 	{
@@ -333,7 +360,7 @@ void Crawler::addCrawlingZone(const QUrl &zone_prefix)
 void Crawler::start()
 {
 	qDebug("Crawler::start");
-	mWebPageProcessor->loadCookiesFromFireFoxProfile(mPathToFireFoxProfile);
+	mWebPageProcessor->loadCookiesFromFirefoxProfile(mPathToFireFoxProfile);
 	if(!mLoadingIntervalTimer->isActive())
 	{
 		mLoadingIntervalTimer->setInterval(mRNG->bounded(PAGE_LOADING_INTERVAL_MIN, PAGE_LOADING_INTERVAL_MAX));

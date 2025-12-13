@@ -12,6 +12,7 @@ class Crawler : public QObject
 {
 	Q_OBJECT
 	QString mPathToFireFoxProfile;
+	QStringList mAllowedURLSchemes;
 	QRandomGenerator *mRNG;
 	QTimer *mLoadingIntervalTimer;
 	WebPageProcessor *mWebPageProcessor;
@@ -32,6 +33,7 @@ public:
 	~Crawler();
 	int loadSettingsFromJSONFile(const QString &path_to_file);
 	void setPathToFirefoxProfile(const QString &path_to_ff_profile);
+	void setAllowedURLSchemes(const QStringList &schemes);
 	const Indexer *getIndexer() const;
 	void addURLsToQueue(const QList<QUrl> &urls);
 	void addURLToQueue(const QUrl &url);

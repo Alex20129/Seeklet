@@ -14,6 +14,11 @@
 		"https://www.lostfilm.tv/series/Black_Mirror/seasons",
 		"https://habr.com/en/articles/481974/"
 	],
+	"allowed_url_schemes":
+	[
+		"http",
+		"https"
+	],
 	"crawling_zones":
 	[
 		"https://stackoverflow.com/questions/",

@@ -99,10 +99,7 @@ void WebPageProcessor::extractPageLinks()
 						processedUrl=processedUrl.adjusted(QUrl::RemoveFragment);
 						if (processedUrl.isValid())
 						{
-							if (processedUrl.scheme() == QLatin1StringView("http") || processedUrl.scheme() == QLatin1StringView("https"))
-							{
-								mPageLinks.append(processedUrl);
-							}
+							mPageLinks.append(processedUrl);
 						}
 					}
 				}
@@ -133,7 +130,7 @@ void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 	createNewWebPage();
 }
 
-void WebPageProcessor::loadCookiesFromFireFoxProfile(const QString &path_to_file)
+void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file)
 {
 	if(path_to_file.isEmpty())
 	{
@@ -171,10 +168,10 @@ void WebPageProcessor::loadCookiesFromFireFoxProfile(const QString &path_to_file
 	{
 		return;
 	}
-	loadCookiesFromFireFoxDB(cookiesFilePath);
+	loadCookiesFromFirefoxDB(cookiesFilePath);
 }
 
-void WebPageProcessor::loadCookiesFromFireFoxDB(const QString &path_to_file)
+void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 {
 	QList<QNetworkCookie> cookies;
 	{

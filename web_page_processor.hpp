@@ -23,8 +23,8 @@ private slots:
 public:
 	WebPageProcessor(QObject *parent=nullptr);
 	void setHttpUserAgent(const QString &user_agent);
-	void loadCookiesFromFireFoxProfile(const QString &path_to_file);
-	void loadCookiesFromFireFoxDB(const QString &path_to_file);
+	void loadCookiesFromFirefoxProfile(const QString &path_to_file);
+	void loadCookiesFromFirefoxDB(const QString &path_to_file);
 	void loadPage(const QUrl &url);
 	const QString &getPageContentAsHTML() const;
 	const QString &getPageContentAsTEXT() const;
