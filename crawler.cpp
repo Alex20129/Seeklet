@@ -42,6 +42,8 @@ void Crawler::swapURLLists()
 
 int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 {
+	qDebug("Crawler::loadSettingsFromJSONFile");
+
 	QFile crawlerConfigFile(path_to_file);
 
 	if (!crawlerConfigFile.exists())
@@ -305,29 +307,26 @@ void Crawler::addCrawlingZone(const QUrl &zone_prefix)
 	{
 		return;
 	}
-	if(zone_prefix.isValid())
+	if(!zone_prefix.isValid())
 	{
-		QString zonePrefixString=zone_prefix.toString();
-		qDebug() << "Prefix:" << zonePrefixString;
-		qDebug() << "Host:" << zone_prefix.host();
-		QStringList *zonePrefixList=mCrawlingZones.value(zone_prefix.host(), nullptr);
-		if(nullptr!=zonePrefixList)
+		return;
+	}
+	QString zonePrefixString=zone_prefix.toString();
+	qDebug() << "Prefix:" << zonePrefixString;
+	qDebug() << "Host:" << zone_prefix.host();
+	QStringList *zonePrefixList=mCrawlingZones.value(zone_prefix.host(), nullptr);
+	if(nullptr!=zonePrefixList)
+	{
+		if(!zonePrefixList->contains(zonePrefixString))
 		{
-			if(!zonePrefixList->contains(zonePrefixString))
-			{
-				zonePrefixList->append(zonePrefixString);
-			}
-		}
-		else
-		{
-			zonePrefixList=new QStringList;
 			zonePrefixList->append(zonePrefixString);
-			mCrawlingZones.insert(zone_prefix.host(), zonePrefixList);
 		}
 	}
 	else
 	{
-		qWarning() << "Invalid URL:" << zone_prefix.toString();
+		zonePrefixList=new QStringList;
+		zonePrefixList->append(zonePrefixString);
+		mCrawlingZones.insert(zone_prefix.host(), zonePrefixList);
 	}
 }
 
