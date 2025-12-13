@@ -292,10 +292,13 @@ void Crawler::addURLToQueue(const QUrl &url)
 		skipThisURL=1;
 		qDebug() << "Skipping page outside crawling zone";
 	}
-	if(!mAllowedURLSchemes.contains(url.scheme()))
+	if(!mAllowedURLSchemes.isEmpty())
 	{
-		skipThisURL=1;
-		qDebug() << "Skipping URL due to inacceptable scheme";
+		if(!mAllowedURLSchemes.contains(url.scheme()))
+		{
+			skipThisURL=1;
+			qDebug() << "Skipping URL due to inacceptable scheme:" << url.scheme();
+		}
 	}
 	if(!skipThisURL)
 	{
