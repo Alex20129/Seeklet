@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	QGuiApplication fossenApp(argc, argv);
+	QApplication fossenApp(argc, argv);
 
 	Crawler *myCrawler=new Crawler;
 

@@ -2,6 +2,6 @@
 #define MAIN_HPP
 
 #include <QTimer>
-#include <QGuiApplication>
+#include <QApplication>
 
 #endif // MAIN_HPP

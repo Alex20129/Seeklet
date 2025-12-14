@@ -16,8 +16,8 @@ FIND_PACKAGE(OpenSSL REQUIRED)
 MESSAGE("OpenSSL version: ${OPENSSL_VERSION}")
 LINK_LIBRARIES("${OPENSSL_LIBRARIES}")
 
-FIND_PACKAGE(Qt6 COMPONENTS Core Network Sql WebEngineCore REQUIRED)
-LINK_LIBRARIES(Qt6::Core Qt6::Network Qt6::Sql Qt6::WebEngineCore)
+FIND_PACKAGE(Qt6 COMPONENTS Core Network Sql WebEngineCore WebEngineWidgets REQUIRED)
+LINK_LIBRARIES(Qt6::Core Qt6::Network Qt6::Sql Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 LINK_LIBRARIES(jansson htmlcxx)
 

@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QSettings>
 #include <QDir>
+#include <QScreen>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
@@ -22,6 +23,7 @@ void WebPageProcessor::createNewWebPage()
 		mWebPage->deleteLater();
 	}
 	mWebPage=new QWebEnginePage(mProfile, this);
+	mWebViewWidget->setPage(mWebPage);
 	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentTEXT);
 	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentHTML);
 }
@@ -111,23 +113,39 @@ void WebPageProcessor::extractPageLinks()
 
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
-	mWebPage=nullptr;
+	mWebViewWidget=new QWebEngineView();
+	mWebViewWidget->setWindowFlags(Qt::FramelessWindowHint|Qt::BypassWindowManagerHint);
+	mWebViewWidget->setAttribute(Qt::WA_DontShowOnScreen);
+	setWindowSize(QSize(0, 0));
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0");
-	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
+	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
+	mWebPage=nullptr;
 	createNewWebPage();
+	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
 }
 
 void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 {
-	if(user_agent.isEmpty())
+	if(mProfile->httpUserAgent()!=user_agent)
 	{
-		return;
+		mProfile->setHttpUserAgent(user_agent);
+		createNewWebPage();
 	}
-	mProfile->setHttpUserAgent(user_agent);
-	createNewWebPage();
+}
+
+void WebPageProcessor::setWindowSize(const QSize &window_size)
+{
+	mWindowSize=window_size;
+	if(mWindowSize.width()>0 && mWindowSize.height()>0)
+	{
+		mWebViewWidget->resize(mWindowSize);
+	}
+	else
+	{
+		mWebViewWidget->resize(mWebViewWidget->screen()->size());
+	}
 }
 
 void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file)
