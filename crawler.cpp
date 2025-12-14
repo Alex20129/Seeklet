@@ -124,6 +124,16 @@ void Crawler::setPathToFirefoxProfile(const QString &path)
 	qDebug()<<path;
 }
 
+void Crawler::setHttpUserAgent(const QString &user_agent)
+{
+	mWebPageProcessor->setHttpUserAgent(user_agent);
+}
+
+void Crawler::setWindowSize(const QSize &window_size)
+{
+	mWebPageProcessor->setWindowSize(window_size);
+}
+
 void Crawler::setAllowedURLSchemes(const QStringList &schemes)
 {
 	qDebug("Crawler::setAllowedURLSchemes");

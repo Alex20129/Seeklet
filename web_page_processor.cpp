@@ -117,12 +117,11 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mWebViewWidget->setWindowFlags(Qt::FramelessWindowHint|Qt::BypassWindowManagerHint);
 	mWebViewWidget->setAttribute(Qt::WA_DontShowOnScreen);
 	setWindowSize(QSize(0, 0));
+	mWebPage=nullptr;
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
-	mWebPage=nullptr;
-	createNewWebPage();
+	setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
 }
 

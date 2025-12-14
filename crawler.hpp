@@ -33,6 +33,8 @@ public:
 	~Crawler();
 	int loadSettingsFromJSONFile(const QString &path_to_file);
 	void setPathToFirefoxProfile(const QString &path_to_ff_profile);
+	void setHttpUserAgent(const QString &user_agent);
+	void setWindowSize(const QSize &window_size);
 	void setAllowedURLSchemes(const QStringList &schemes);
 	const Indexer *getIndexer() const;
 	void addURLsToQueue(const QList<QUrl> &urls);
