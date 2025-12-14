@@ -62,27 +62,27 @@ QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) co
 		return searchResults;
 	}
 	QString smallestSetKey;
-	int minSize = INT_MAX;
+	qsizetype smallestSetSize = LONG_MAX;
 	for (const QString &word : words)
 	{
-		QString lowerWord = word.toLower();
+		const QString lowerWord = word.toLower();
 		if (!localIndexTableOfContents.contains(lowerWord))
 		{
 			return searchResults;
 		}
-		if (localIndexTableOfContents[lowerWord].size() < minSize)
+		if (localIndexTableOfContents[lowerWord].size() < smallestSetSize)
 		{
-			minSize = localIndexTableOfContents[lowerWord].size();
+			smallestSetSize = localIndexTableOfContents[lowerWord].size();
 			smallestSetKey = lowerWord;
 		}
 	}
 	QSet<uint64_t> pageSubsetIntersection = localIndexTableOfContents[smallestSetKey];
 	for(const QString &word : words)
 	{
-		QString lowerWord=word.toLower();
+		const QString lowerWord=word.toLower();
 		if(lowerWord!=smallestSetKey)
 		{
-			const QSet<uint64_t> pageSubset=localIndexTableOfContents.value(lowerWord);
+			const QSet<uint64_t> &pageSubset=localIndexTableOfContents[lowerWord];
 			pageSubsetIntersection.intersect(pageSubset);
 			if(pageSubsetIntersection.isEmpty())
 			{
