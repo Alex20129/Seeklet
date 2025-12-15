@@ -5,8 +5,6 @@
 #include "main.hpp"
 #include "crawler.hpp"
 
-using namespace std;
-
 int main(int argc, char **argv)
 {
 	QApplication fossenApp(argc, argv);

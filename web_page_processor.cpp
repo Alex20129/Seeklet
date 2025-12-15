@@ -24,17 +24,23 @@ void WebPageProcessor::createNewWebPage()
 	}
 	mWebPage=new QWebEnginePage(mProfile, this);
 	mWebViewWidget->setPage(mWebPage);
-	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentTEXT);
-	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::extractPageContentHTML);
+	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
 }
 
-void WebPageProcessor::extractPageContentTEXT(bool ok)
+void WebPageProcessor::waitForJSToFinish(bool ok)
 {
-	if(!ok)
+	if(ok)
 	{
-		// TODO: process page loading error
-		return;
+		mJSCooldownTimer->start();
 	}
+	else
+	{
+		emit pageLoadingFail();
+	}
+}
+
+void WebPageProcessor::extractPageContentTEXT()
+{
 	mWebPage->toPlainText(
 		[this](const QString &text)
 		{
@@ -46,13 +52,8 @@ void WebPageProcessor::extractPageContentTEXT(bool ok)
 		});
 }
 
-void WebPageProcessor::extractPageContentHTML(bool ok)
+void WebPageProcessor::extractPageContentHTML()
 {
-	if(!ok)
-	{
-		// TODO: process page loading error
-		return;
-	}
 	mWebPage->toHtml(
 		[this](const QString &html)
 		{
@@ -122,6 +123,11 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
 	setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
+	mJSCooldownTimer=new QTimer(this);
+	mJSCooldownTimer->setSingleShot(1);
+	mJSCooldownTimer->setInterval(3000);
+	connect(mJSCooldownTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
+	connect(mJSCooldownTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
 }
 
@@ -145,6 +151,11 @@ void WebPageProcessor::setWindowSize(const QSize &window_size)
 	{
 		mWebViewWidget->resize(mWebViewWidget->screen()->size());
 	}
+}
+
+void WebPageProcessor::setJSCooldownInterval(int64_t interval_ms)
+{
+	mJSCooldownTimer->setInterval(interval_ms);
 }
 
 void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file)
