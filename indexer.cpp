@@ -55,17 +55,22 @@ void Indexer::merge(const Indexer &other)
 
 QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) const
 {
-	qDebug("Indexer::searchWords");
+	qDebug("Indexer::searchByWords");
 	QVector<const PageMetadata*> searchResults;
 	if (words.isEmpty())
 	{
 		return searchResults;
 	}
-	QString smallestSetKey;
-	qsizetype smallestSetSize = LONG_MAX;
+	QStringList lowerWords;
+	lowerWords.reserve(words.size());
 	for (const QString &word : words)
 	{
-		const QString lowerWord = word.toLower();
+		lowerWords.append(word.toLower());
+	}
+	QString smallestSetKey;
+	qsizetype smallestSetSize = LONG_MAX;
+	for (const QString &lowerWord : lowerWords)
+	{
 		if (!localIndexTableOfContents.contains(lowerWord))
 		{
 			return searchResults;
@@ -76,18 +81,15 @@ QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) co
 			smallestSetKey = lowerWord;
 		}
 	}
+	lowerWords.removeAll(smallestSetKey);
 	QSet<uint64_t> pageSubsetIntersection = localIndexTableOfContents[smallestSetKey];
-	for(const QString &word : words)
+	for(const QString &lowerWord : lowerWords)
 	{
-		const QString lowerWord=word.toLower();
-		if(lowerWord!=smallestSetKey)
+		const QSet<uint64_t> &pageSubset=localIndexTableOfContents[lowerWord];
+		pageSubsetIntersection.intersect(pageSubset);
+		if(pageSubsetIntersection.isEmpty())
 		{
-			const QSet<uint64_t> &pageSubset=localIndexTableOfContents[lowerWord];
-			pageSubsetIntersection.intersect(pageSubset);
-			if(pageSubsetIntersection.isEmpty())
-			{
-				return searchResults;
-			}
+			return searchResults;
 		}
 	}
 	for(uint64_t hash : pageSubsetIntersection)
