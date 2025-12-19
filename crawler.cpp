@@ -84,34 +84,40 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 
 	QJsonObject rawlerConfigJsonObject = crawlerConfigJsonDoc.object();
 
-	QStringList schemes;
-	const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();
-	for (const QJsonValue &allowedURLScheme : allowedURLSchemes)
+	if(rawlerConfigJsonObject.value("allowed_url_schemes").isArray())
 	{
-		QString schemeString=allowedURLScheme.toString();
-		if(!schemeString.isEmpty())
+		const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();
+		for (const QJsonValue &allowedURLScheme : allowedURLSchemes)
 		{
-			schemes.append(schemeString);
+			this->addAllowedURLScheme(allowedURLScheme.toString());
 		}
 	}
-	this->setAllowedURLSchemes(schemes);
 
-	const QJsonArray &startURLs=rawlerConfigJsonObject.value("start_urls").toArray();
-	for (const QJsonValue &startURL : startURLs)
+	if(rawlerConfigJsonObject.value("start_urls").isArray())
 	{
-		this->addURLToQueue(startURL.toString());
+		const QJsonArray &startURLs=rawlerConfigJsonObject.value("start_urls").toArray();
+		for (const QJsonValue &startURL : startURLs)
+		{
+			this->addURLToQueue(startURL.toString());
+		}
 	}
 
-	const QJsonArray &crawlingZones=rawlerConfigJsonObject.value("crawling_zones").toArray();
-	for (const QJsonValue &crawlingZone : crawlingZones)
+	if(rawlerConfigJsonObject.value("crawling_zones").isArray())
 	{
-		this->addCrawlingZone(crawlingZone.toString());
+		const QJsonArray &crawlingZones=rawlerConfigJsonObject.value("crawling_zones").toArray();
+		for (const QJsonValue &crawlingZone : crawlingZones)
+		{
+			this->addCrawlingZone(crawlingZone.toString());
+		}
 	}
 
-	const QJsonArray &blHosts=rawlerConfigJsonObject.value("black_list").toArray();
-	for (const QJsonValue &blHost : blHosts)
+	if(rawlerConfigJsonObject.value("black_list").isArray())
 	{
-		this->addHostnameToBlacklist(blHost.toString());
+		const QJsonArray &blHosts=rawlerConfigJsonObject.value("black_list").toArray();
+		for (const QJsonValue &blHost : blHosts)
+		{
+			this->addHostnameToBlacklist(blHost.toString());
+		}
 	}
 
 	return 0;
@@ -119,9 +125,7 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 
 void Crawler::setPathToFirefoxProfile(const QString &path)
 {
-	qDebug("Crawler::setPathToFirefoxProfile");
 	mPathToFireFoxProfile=path;
-	qDebug()<<path;
 }
 
 void Crawler::setHttpUserAgent(const QString &user_agent)
@@ -134,11 +138,12 @@ void Crawler::setWindowSize(const QSize &window_size)
 	mWebPageProcessor->setWindowSize(window_size);
 }
 
-void Crawler::setAllowedURLSchemes(const QStringList &schemes)
+void Crawler::addAllowedURLScheme(const QString &scheme)
 {
-	qDebug("Crawler::setAllowedURLSchemes");
-	mAllowedURLSchemes=schemes;
-	qDebug()<<mAllowedURLSchemes;
+	if(!scheme.isEmpty())
+	{
+		mAllowedURLSchemes.append(scheme);
+	}
 }
 
 const Indexer *Crawler::getIndexer() const
@@ -284,7 +289,6 @@ void Crawler::addURLToQueue(const QUrl &url)
 		qDebug() << "Skipping visited page";
 	}
 	sUnwantedLinksMutex.unlock();
-
 	bool urlAllowedByZonePrefix=1;
 	const QStringList* const zonePrefixList=mCrawlingZones.value(url.host(), nullptr);
 	if(nullptr!=zonePrefixList)
@@ -315,17 +319,15 @@ void Crawler::addURLToQueue(const QUrl &url)
 			qDebug() << "Skipping URL due to inacceptable scheme:" << url.scheme();
 		}
 	}
+	if(mURLListQueued->contains(url) || mURLListActive->contains(url))
+	{
+		skipThisURL=true;
+		qDebug() << "Skipping duplicate URL";
+	}
 	if(skipThisURL!=true)
 	{
-		if(mURLListQueued->contains(url))
-		{
-			qDebug() << "Skipping duplicate URL";
-		}
-		else
-		{
-			qDebug() << "Adding URL to the processing list";
-			mURLListQueued->append(url);
-		}
+		mURLListQueued->append(url);
+		qDebug() << "Adding URL to the processing list";
 	}
 }
 
@@ -344,7 +346,7 @@ void Crawler::addHostnameToBlacklist(const QString &hostname)
 void Crawler::addCrawlingZone(const QUrl &zone_prefix)
 {
 	qDebug("Crawler::addCrawlingZone");
-	if(zone_prefix.isEmpty())
+	if(zone_prefix.scheme().isEmpty())
 	{
 		return;
 	}
@@ -352,13 +354,8 @@ void Crawler::addCrawlingZone(const QUrl &zone_prefix)
 	{
 		return;
 	}
-	if(!zone_prefix.isValid())
-	{
-		return;
-	}
 	QString zonePrefixString=zone_prefix.toString();
-	qDebug() << "Prefix:" << zonePrefixString;
-	qDebug() << "Host:" << zone_prefix.host();
+	qDebug() << zonePrefixString;
 	QStringList *zonePrefixList=mCrawlingZones.value(zone_prefix.host(), nullptr);
 	if(nullptr!=zonePrefixList)
 	{
