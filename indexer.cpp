@@ -71,8 +71,13 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 	{
 		return 0.0;
 	}
-	double df=localIndexTableOfContents.value(word).size();
-	if(df<1.0)
+	double df=0.0;
+	if(localIndexTableOfContents.contains(word))
+	{
+		const QSet<uint64_t> &pageSubset=localIndexTableOfContents[word];
+		df=pageSubset.size();
+	}
+	else
 	{
 		return 0.0;
 	}
