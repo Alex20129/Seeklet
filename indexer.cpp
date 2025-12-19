@@ -53,6 +53,33 @@ void Indexer::merge(const Indexer &other)
 		<< other.localIndexTableOfContents.size() << "words";
 }
 
+double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &word) const
+{
+	double pageWordsTotal=page->wordsTotal;
+	if(pageWordsTotal<2.0)
+	{
+		return 0.0;
+	}
+	double tf=page->words.value(word, 0);
+	if (tf<1.0)
+	{
+		return 0.0;
+	}
+	tf/=pageWordsTotal;
+	double pagesTotal=localIndexStorage.size();
+	if(pagesTotal<1.0)
+	{
+		return 0.0;
+	}
+	double df=localIndexTableOfContents.value(word).size();
+	if(df<1.0)
+	{
+		return 0.0;
+	}
+	double idf=std::log(pagesTotal / df);
+	return (tf*idf);
+}
+
 QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) const
 {
 	qDebug("Indexer::searchByWords");

@@ -10,6 +10,7 @@
 struct PageMetadata
 {
 	uint64_t contentHash;
+	uint64_t wordsTotal;
 	QDateTime timeStamp;
 	QString title;
 	QByteArray url;
@@ -29,6 +30,7 @@ public:
 	void load(const QString &db_path);
 	void save(const QString &db_path);
 	void merge(const Indexer &other);
+	double calculateTfIdfScore(const PageMetadata *page, const QString &word) const;
 	QVector<const PageMetadata*> searchByWords(const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);

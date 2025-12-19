@@ -190,6 +190,12 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded();
 	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
+	pageMetadata.wordsTotal = 0;
+	QMap<QString, uint64_t>::ConstIterator pageWordsIt;
+	for(pageWordsIt=pageMetadata.words.constBegin(); pageWordsIt!=pageMetadata.words.constEnd(); pageWordsIt++)
+	{
+		pageMetadata.wordsTotal += pageWordsIt.value();
+	}
 
 	qDebug() << pageMetadata.url;
 
