@@ -17,6 +17,7 @@ struct PageMetadata
 	QByteArray url;
 	QMap<QString, uint64_t> words;
 	PageMetadata();
+	bool isValid() const;
 };
 
 class Indexer : public QObject

@@ -8,6 +8,32 @@ PageMetadata::PageMetadata()
 	wordsTotal=0;
 }
 
+bool PageMetadata::isValid() const
+{
+	bool result=true;
+	if(urlHash==0)
+	{
+		result=false;
+	}
+	if(contentHash==0)
+	{
+		result=false;
+	}
+	if(words.isEmpty())
+	{
+		result=false;
+	}
+	if(url.isEmpty())
+	{
+		result=false;
+	}
+	if(!timeStamp.isValid())
+	{
+		result=false;
+	}
+	return result;
+}
+
 Indexer::Indexer(QObject *parent) : QObject(parent)
 {
 }
@@ -159,19 +185,7 @@ void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const 
 
 void Indexer::addPage(const PageMetadata &page_metadata)
 {
-	if(page_metadata.urlHash==0)
-	{
-		return;
-	}
-	if(page_metadata.contentHash==0)
-	{
-		return;
-	}
-	if(page_metadata.words.isEmpty())
-	{
-		return;
-	}
-	if(page_metadata.url.isEmpty())
+	if(!page_metadata.isValid())
 	{
 		return;
 	}
@@ -186,9 +200,10 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
 	localIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
 	localIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
-	for (QMap<QString, uint64_t>::const_iterator it = page_metadata.words.constBegin(); it != page_metadata.words.constEnd(); it++)
+	QMap<QString, uint64_t>::const_iterator wordsIt;
+	for (wordsIt = pageMetaDataCopy->words.constBegin(); wordsIt != pageMetaDataCopy->words.constEnd(); wordsIt++)
 	{
-		const QString word = it.key();
-		localIndexTableOfContents[word].insert(page_metadata.contentHash);
+		const QString word = wordsIt.key();
+		localIndexTableOfContents[word].insert(pageMetaDataCopy->contentHash);
 	}
 }
