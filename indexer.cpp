@@ -1,12 +1,11 @@
-#include <QRegularExpression>
 #include <QDebug>
 #include "indexer.hpp"
 
 PageMetadata::PageMetadata()
 {
-	contentHash=0;
+	urlHash=
+	contentHash=
 	wordsTotal=0;
-	timeStamp=QDateTime::fromSecsSinceEpoch(0);
 }
 
 Indexer::Indexer(QObject *parent) : QObject(parent)
@@ -15,8 +14,8 @@ Indexer::Indexer(QObject *parent) : QObject(parent)
 
 Indexer::~Indexer()
 {
-	qDeleteAll(localIndexStorage);
-	localIndexStorage.clear();
+	qDeleteAll(localIndexByContentHash);
+	localIndexByContentHash.clear();
 }
 
 //TODO: init, save, load
@@ -41,13 +40,13 @@ void Indexer::save(const QString &db_path)
 void Indexer::merge(const Indexer &other)
 {
 	qDebug("Indexer::merge");
-	for (QHash<uint64_t, PageMetadata*>::const_iterator it = other.localIndexStorage.constBegin(); it != other.localIndexStorage.constEnd(); it++)
+	for (QHash<uint64_t, PageMetadata *>::const_iterator it = other.localIndexByContentHash.constBegin(); it != other.localIndexByContentHash.constEnd(); it++)
 	{
 		const uint64_t hash = it.key();
-		if (!localIndexStorage.contains(hash))
+		if (!localIndexByContentHash.contains(hash))
 		{
 			PageMetadata *pageMetaDataCopy = new PageMetadata(*it.value());
-			localIndexStorage.insert(hash, pageMetaDataCopy);
+			localIndexByContentHash.insert(hash, pageMetaDataCopy);
 		}
 	}
 	for (QHash<QString, QSet<uint64_t>>::const_iterator it = other.localIndexTableOfContents.constBegin(); it != other.localIndexTableOfContents.constEnd(); it++)
@@ -56,24 +55,25 @@ void Indexer::merge(const Indexer &other)
 		const QSet<uint64_t> &hashes = it.value();
 		localIndexTableOfContents[word].unite(hashes);
 	}
-	qDebug() << "Merged index: added" << other.localIndexStorage.size() << "pages and"
+	qDebug() << "Merged index: added" << other.localIndexByContentHash.size() << "pages and"
 		<< other.localIndexTableOfContents.size() << "words";
 }
 
-const PageMetadata &Indexer::getPageMetadata(uint64_t content_hash) const
+const PageMetadata *Indexer::getPageMetadataByContentHash(uint64_t content_hash) const
 {
-	PageMetadata *page=localIndexStorage.value(content_hash, nullptr);
-	if(nullptr!=page)
-	{
-		return *page;
-	}
-	return mPageStub;
+	const PageMetadata *page=localIndexByContentHash.value(content_hash, nullptr);
+	return page;
 }
 
-QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &words) const
+const PageMetadata *Indexer::getPageMetadataByUrlHash(uint64_t url_hash) const
 {
-	qDebug("Indexer::searchByWords");
-	QVector<const PageMetadata*> searchResults;
+	const PageMetadata *page=localIndexByUrlHash.value(url_hash, nullptr);
+	return page;
+}
+
+QVector<const PageMetadata *> Indexer::searchPagesByWords(const QStringList &words) const
+{
+	QVector<const PageMetadata *> searchResults;
 	if (words.isEmpty())
 	{
 		return searchResults;
@@ -85,7 +85,7 @@ QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &word
 		lowerWords.append(word.toLower());
 	}
 	QString smallestSetKey;
-	qsizetype smallestSetSize = LONG_MAX;
+	qsizetype smallestSetSize = SIZE_MAX;
 	for (const QString &lowerWord : lowerWords)
 	{
 		if (!localIndexTableOfContents.contains(lowerWord))
@@ -111,7 +111,7 @@ QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &word
 	}
 	for(uint64_t hash : pageSubsetIntersection)
 	{
-		const PageMetadata *searchResult=localIndexStorage.value(hash, nullptr);
+		const PageMetadata *searchResult=localIndexByContentHash.value(hash, nullptr);
 		if(nullptr!=searchResult)
 		{
 			searchResults.append(searchResult);
@@ -122,7 +122,7 @@ QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &word
 
 double Indexer::calculateTfIdfScore(uint64_t content_hash, const QString &word) const
 {
-	const PageMetadata *page=localIndexStorage.value(content_hash, nullptr);
+	const PageMetadata *page=localIndexByContentHash.value(content_hash, nullptr);
 	if(nullptr==page)
 	{
 		return 0.0;
@@ -148,17 +148,25 @@ double Indexer::calculateTfIdfScore(uint64_t content_hash, const QString &word) 
 		return 0.0;
 	}
 	double df=pageSubset.size();
-	double pagesTotal=localIndexStorage.size();
+	double pagesTotal=localIndexByContentHash.size();
 	double idf=std::log(pagesTotal / df);
 	return (tfNormalized*idf);
 }
 
-void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata*> &pages, const QStringList &words) const
+void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const
 {
 }
 
 void Indexer::addPage(const PageMetadata &page_metadata)
 {
+	if(page_metadata.urlHash==0)
+	{
+		return;
+	}
+	if(page_metadata.contentHash==0)
+	{
+		return;
+	}
 	if(page_metadata.words.isEmpty())
 	{
 		return;
@@ -167,12 +175,17 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	{
 		return;
 	}
-	if(localIndexStorage.contains(page_metadata.contentHash))
+	if(localIndexByUrlHash.contains(page_metadata.urlHash))
+	{
+		return;
+	}
+	if(localIndexByContentHash.contains(page_metadata.contentHash))
 	{
 		return;
 	}
 	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
-	localIndexStorage.insert(page_metadata.contentHash, pageMetaDataCopy);
+	localIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
+	localIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
 	for (QMap<QString, uint64_t>::const_iterator it = page_metadata.words.constBegin(); it != page_metadata.words.constEnd(); it++)
 	{
 		const QString word = it.key();

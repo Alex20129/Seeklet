@@ -266,9 +266,14 @@ QString WebPageProcessor::getPageTitle() const
 	return mWebPage->title();
 }
 
-QByteArray WebPageProcessor::getPageURLEncoded() const
+QUrl WebPageProcessor::getPageURL() const
 {
-	return mWebPage->url().toEncoded(QUrl::RemoveFragment);
+	return mWebPage->url();
+}
+
+QByteArray WebPageProcessor::getPageURLEncoded(QUrl::FormattingOptions options) const
+{
+	return mWebPage->url().toEncoded(options);
 }
 
 const QList<QUrl> &WebPageProcessor::getPageLinks() const

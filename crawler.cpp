@@ -185,10 +185,11 @@ void Crawler::onPageProcessingFinished()
 	const QList<QUrl> &pageLinksList = mWebPageProcessor->getPageLinks();
 	PageMetadata pageMetadata;
 
-	pageMetadata.contentHash = xorshift_hash_64(pageContentHtml.toUtf8());
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
-	pageMetadata.title = mWebPageProcessor->getPageTitle();
+	pageMetadata.contentHash = xorshift_hash_64(pageContentHtml.toUtf8());
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded();
+	pageMetadata.urlHash = xorshift_hash_64(pageMetadata.url);
+	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
 	pageMetadata.wordsTotal = 0;
 	QMap<QString, uint64_t>::ConstIterator pageWordsIt;
@@ -411,7 +412,7 @@ void Crawler::searchTest()
 	qDebug("Crawler::searchTest");
 	QStringList words;
 	words.append("qtwebengine");
-	const QVector<const PageMetadata*> searchResults=mIndexer->searchPagesByWords(words);
+	const QVector<const PageMetadata *> searchResults=mIndexer->searchPagesByWords(words);
 	for(const PageMetadata *page : searchResults)
 	{
 		qDebug() << page->contentHash;
