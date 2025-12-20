@@ -30,8 +30,9 @@ public:
 	void load(const QString &db_path);
 	void save(const QString &db_path);
 	void merge(const Indexer &other);
-	double calculateTfIdfScore(const PageMetadata *page, const QString &word) const;
-	QVector<const PageMetadata*> searchByWords(const QStringList &words) const;
+	QVector<const PageMetadata*> searchPagesByWords(const QStringList &words) const;
+	double calculateTfIdfScore(uint64_t content_hash, const QString &word) const;
+	void sortPagesByTfIdfScore(QVector<const PageMetadata*> &pages, const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
 };

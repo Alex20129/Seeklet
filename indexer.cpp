@@ -53,39 +53,7 @@ void Indexer::merge(const Indexer &other)
 		<< other.localIndexTableOfContents.size() << "words";
 }
 
-double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &word) const
-{
-	double pageWordsTotal=page->wordsTotal;
-	if(pageWordsTotal<2.0)
-	{
-		return 0.0;
-	}
-	double tf=page->words.value(word, 0);
-	if (tf<1.0)
-	{
-		return 0.0;
-	}
-	tf/=pageWordsTotal;
-	double pagesTotal=localIndexStorage.size();
-	if(pagesTotal<1.0)
-	{
-		return 0.0;
-	}
-	double df=0.0;
-	if(localIndexTableOfContents.contains(word))
-	{
-		const QSet<uint64_t> &pageSubset=localIndexTableOfContents[word];
-		df=pageSubset.size();
-	}
-	else
-	{
-		return 0.0;
-	}
-	double idf=std::log(pagesTotal / df);
-	return (tf*idf);
-}
-
-QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) const
+QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &words) const
 {
 	qDebug("Indexer::searchByWords");
 	QVector<const PageMetadata*> searchResults;
@@ -133,6 +101,43 @@ QVector<const PageMetadata*> Indexer::searchByWords(const QStringList &words) co
 		}
 	}
 	return searchResults;
+}
+
+double Indexer::calculateTfIdfScore(uint64_t content_hash, const QString &word) const
+{
+	const PageMetadata *page=localIndexStorage.value(content_hash, nullptr);
+	if(nullptr==page)
+	{
+		return 0.0;
+	}
+	if(page->wordsTotal==0)
+	{
+		return 0.0;
+	}
+	double pageWordsTotal=page->wordsTotal;
+	if(page->words.value(word, 0)==0)
+	{
+		return 0.0;
+	}
+	double tfNormalized=page->words.value(word, 0);
+	tfNormalized/=pageWordsTotal;
+	if(!localIndexTableOfContents.contains(word))
+	{
+		return 0.0;
+	}
+	const QSet<uint64_t> &pageSubset=localIndexTableOfContents[word];
+	if(pageSubset.isEmpty())
+	{
+		return 0.0;
+	}
+	double df=pageSubset.size();
+	double pagesTotal=localIndexStorage.size();
+	double idf=std::log(pagesTotal / df);
+	return (tfNormalized*idf);
+}
+
+void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata*> &pages, const QStringList &words) const
+{
 }
 
 void Indexer::addPage(const PageMetadata &page_metadata)

@@ -411,7 +411,7 @@ void Crawler::searchTest()
 	qDebug("Crawler::searchTest");
 	QStringList words;
 	words.append("qtwebengine");
-	const QVector<const PageMetadata*> searchResults=mIndexer->searchByWords(words);
+	const QVector<const PageMetadata*> searchResults=mIndexer->searchPagesByWords(words);
 	for(const PageMetadata *page : searchResults)
 	{
 		qDebug() << page->contentHash;
