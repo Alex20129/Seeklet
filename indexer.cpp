@@ -2,6 +2,13 @@
 #include <QDebug>
 #include "indexer.hpp"
 
+PageMetadata::PageMetadata()
+{
+	contentHash=0;
+	wordsTotal=0;
+	timeStamp=QDateTime::fromSecsSinceEpoch(0);
+}
+
 Indexer::Indexer(QObject *parent) : QObject(parent)
 {
 }
@@ -53,6 +60,16 @@ void Indexer::merge(const Indexer &other)
 		<< other.localIndexTableOfContents.size() << "words";
 }
 
+const PageMetadata &Indexer::getPageMetadata(uint64_t content_hash) const
+{
+	PageMetadata *page=localIndexStorage.value(content_hash, nullptr);
+	if(nullptr!=page)
+	{
+		return *page;
+	}
+	return mPageStub;
+}
+
 QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &words) const
 {
 	qDebug("Indexer::searchByWords");
@@ -95,7 +112,7 @@ QVector<const PageMetadata*> Indexer::searchPagesByWords(const QStringList &word
 	for(uint64_t hash : pageSubsetIntersection)
 	{
 		const PageMetadata *searchResult=localIndexStorage.value(hash, nullptr);
-		if(searchResult!=nullptr)
+		if(nullptr!=searchResult)
 		{
 			searchResults.append(searchResult);
 		}

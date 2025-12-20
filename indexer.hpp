@@ -15,6 +15,7 @@ struct PageMetadata
 	QString title;
 	QByteArray url;
 	QMap<QString, uint64_t> words;
+	PageMetadata();
 };
 
 class Indexer : public QObject
@@ -22,6 +23,7 @@ class Indexer : public QObject
 	Q_OBJECT
 	QHash<QString, QSet<uint64_t>> localIndexTableOfContents;
 	QHash<uint64_t, PageMetadata*> localIndexStorage;
+	const PageMetadata mPageStub;
 public:
 	Indexer(QObject *parent = nullptr);
 	~Indexer();
@@ -30,6 +32,7 @@ public:
 	void load(const QString &db_path);
 	void save(const QString &db_path);
 	void merge(const Indexer &other);
+	const PageMetadata &getPageMetadata(uint64_t content_hash) const;
 	QVector<const PageMetadata*> searchPagesByWords(const QStringList &words) const;
 	double calculateTfIdfScore(uint64_t content_hash, const QString &word) const;
 	void sortPagesByTfIdfScore(QVector<const PageMetadata*> &pages, const QStringList &words) const;
