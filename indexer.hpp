@@ -36,8 +36,11 @@ public:
 	void merge(const Indexer &other);
 	const PageMetadata *getPageMetadataByContentHash(uint64_t content_hash) const;
 	const PageMetadata *getPageMetadataByUrlHash(uint64_t url_hash) const;
-	QVector<const PageMetadata *> searchPagesByWords(const QStringList &words) const;
+	QVector<const PageMetadata *> searchPagesByWords(QStringList words) const;
+	double calculateTfIdfScore(uint64_t content_hash, const QStringList &words) const;
+	double calculateTfIdfScore(const PageMetadata *page, const QStringList &words) const;
 	double calculateTfIdfScore(uint64_t content_hash, const QString &word) const;
+	double calculateTfIdfScore(const PageMetadata *page, const QString &word) const;
 	void sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
