@@ -74,12 +74,16 @@ void Indexer::merge(const Indexer &other)
 	QHash<uint64_t, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = other.localIndexByContentHash.constBegin(); cHashIt != other.localIndexByContentHash.constEnd(); cHashIt++)
 	{
-		const uint64_t hash = cHashIt.key();
-		if (!localIndexByContentHash.contains(hash))
+		const uint64_t contentHash = cHashIt.key();
+		if(!localIndexByContentHash.contains(contentHash))
 		{
-			PageMetadata *pageMetaDataCopy = new PageMetadata(*other.localIndexByContentHash[hash]);
-			localIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
-			localIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
+			const PageMetadata *pageMetaDataPtr=other.localIndexByContentHash[contentHash];
+			if(nullptr!=pageMetaDataPtr)
+			{
+				PageMetadata *pageMetaDataCopy = new PageMetadata(*pageMetaDataPtr);
+				localIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
+				localIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
+			}
 		}
 	}
 	newPages=localIndexByContentHash.size()-newPages;
