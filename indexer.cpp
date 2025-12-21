@@ -46,6 +46,7 @@ Indexer::~Indexer()
 {
 	qDeleteAll(localIndexByContentHash);
 	localIndexByContentHash.clear();
+	localIndexByUrlHash.clear();
 }
 
 //TODO: init, save, load
