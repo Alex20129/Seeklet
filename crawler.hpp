@@ -19,9 +19,8 @@ class Crawler : public QObject
 	Indexer *mIndexer;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
 	QHash<QString, QStringList*> mCrawlingZones;
-	static QSet<QString> sVisitedURLList;
+	QSet<uint64_t> mVisitedURLsHashes;
 	static QSet<QString> sHostnameBlacklist;
-	static QMutex sUnwantedLinksMutex;
 	void swapURLLists();
 private slots:
 	void loadNextPage();

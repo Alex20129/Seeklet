@@ -5,10 +5,7 @@
 #include "util.hpp"
 #include "crawler.hpp"
 
-QSet<QString> Crawler::sVisitedURLList;
 QSet<QString> Crawler::sHostnameBlacklist;
-
-QMutex Crawler::sUnwantedLinksMutex;
 
 Crawler::Crawler(QObject *parent) : QObject(parent)
 {
@@ -165,9 +162,6 @@ void Crawler::loadNextPage()
 	}
 	QUrl nextURL = mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
-	sUnwantedLinksMutex.lock();
-	sVisitedURLList.insert(nextURL.toString());
-	sUnwantedLinksMutex.unlock();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
 	mWebPageProcessor->loadPage(nextURL);
 }
@@ -187,7 +181,7 @@ void Crawler::onPageProcessingFinished()
 
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
 	pageMetadata.contentHash = xorshift_hash_64(pageContentHtml.toUtf8());
-	pageMetadata.url = mWebPageProcessor->getPageURLEncoded();
+	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
 	pageMetadata.urlHash = xorshift_hash_64(pageMetadata.url);
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
@@ -197,6 +191,8 @@ void Crawler::onPageProcessingFinished()
 	{
 		pageMetadata.wordsTotal += pageWordsIt.value();
 	}
+
+	mVisitedURLsHashes.insert(pageMetadata.urlHash);
 
 	qDebug() << pageMetadata.url;
 
@@ -281,23 +277,23 @@ void Crawler::addURLsToQueue(const QList<QUrl> &urls)
 void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
-	QString URLString=url.toString();
+	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
+	uint64_t urlHash = xorshift_hash_64(urlAdjusted.toEncoded());
+	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;
-	sUnwantedLinksMutex.lock();
-	if (sHostnameBlacklist.contains(url.host()))
+	if (sHostnameBlacklist.contains(urlAdjusted.host()))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
 	}
-	else if (sVisitedURLList.contains(URLString))
+	else if (mVisitedURLsHashes.contains(urlHash))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping visited page";
 	}
-	sUnwantedLinksMutex.unlock();
 	bool urlAllowedByZonePrefix=1;
-	const QStringList* const zonePrefixList=mCrawlingZones.value(url.host(), nullptr);
+	const QStringList* const zonePrefixList=mCrawlingZones.value(urlAdjusted.host(), nullptr);
 	if(nullptr!=zonePrefixList)
 	{
 		urlAllowedByZonePrefix=0;
@@ -320,20 +316,20 @@ void Crawler::addURLToQueue(const QUrl &url)
 	}
 	if(!mAllowedURLSchemes.isEmpty())
 	{
-		if(!mAllowedURLSchemes.contains(url.scheme()))
+		if(!mAllowedURLSchemes.contains(urlAdjusted.scheme()))
 		{
 			skipThisURL=true;
-			qDebug() << "Skipping URL due to inacceptable scheme:" << url.scheme();
+			qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
 		}
 	}
-	if(mURLListQueued->contains(url) || mURLListActive->contains(url))
+	if(mURLListQueued->contains(urlAdjusted) || mURLListActive->contains(urlAdjusted))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping duplicate URL";
 	}
 	if(skipThisURL!=true)
 	{
-		mURLListQueued->append(url);
+		mURLListQueued->append(urlAdjusted);
 		qDebug() << "Adding URL to the processing list";
 	}
 }
@@ -341,13 +337,11 @@ void Crawler::addURLToQueue(const QUrl &url)
 void Crawler::addHostnameToBlacklist(const QString &hostname)
 {
 	qDebug("Crawler::addHostnameToBlacklist");
-	sUnwantedLinksMutex.lock();
 	if (!sHostnameBlacklist.contains(hostname))
 	{
 		sHostnameBlacklist.insert(hostname);
 		qDebug() << "Host name has been added to the blacklist:" << hostname;
 	}
-	sUnwantedLinksMutex.unlock();
 }
 
 void Crawler::addCrawlingZone(const QUrl &zone_prefix)
@@ -395,15 +389,28 @@ void Crawler::stop()
 {
 	qDebug("Crawler::stop");
 	mLoadingIntervalTimer->stop();
+#ifndef NDEBUG
 	qDebug() << "unvisited pages:";
 	qDebug() << *mURLListActive;
 	qDebug() << *mURLListQueued;
+	qDebug() << "visited pages:";
+	QSet<uint64_t>::const_iterator visitedURLsHashesIt;
+	for(visitedURLsHashesIt=mVisitedURLsHashes.constBegin(); visitedURLsHashesIt!=mVisitedURLsHashes.constEnd(); visitedURLsHashesIt++)
+	{
+		const PageMetadata *pageMDPtr=mIndexer->getPageMetadataByUrlHash(*visitedURLsHashesIt);
+		if(nullptr!=pageMDPtr)
+		{
+			qDebug() << pageMDPtr->url;
+			qDebug() << pageMDPtr->title;
+			qDebug() << pageMDPtr->timeStamp.toString();
+			qDebug() << pageMDPtr->urlHash;
+			qDebug() << pageMDPtr->contentHash;
+			qDebug() << "====";
+		}
+	}
+#endif
 	mURLListActive->clear();
 	mURLListQueued->clear();
-	sUnwantedLinksMutex.lock();
-	qDebug() << "Visited Pages:";
-	qDebug() << sVisitedURLList.values();
-	sUnwantedLinksMutex.unlock();
 	emit finished(this);
 }
 
@@ -415,10 +422,11 @@ void Crawler::searchTest()
 	const QVector<const PageMetadata *> searchResults=mIndexer->searchPagesByWords(words);
 	for(const PageMetadata *page : searchResults)
 	{
-		qDebug() << page->contentHash;
-		qDebug() << page->title;
-		qDebug() << page->timeStamp;
 		qDebug() << page->url;
+		qDebug() << page->title;
+		qDebug() << page->timeStamp.toString();
+		qDebug() << page->urlHash;
+		qDebug() << page->contentHash;
 		qDebug() << "====";
 	}
 }

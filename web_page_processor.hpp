@@ -37,7 +37,7 @@ public:
 	const QString &getPageContentAsTEXT() const;
 	QString getPageTitle() const;
 	QUrl getPageURL() const;
-	QByteArray getPageURLEncoded(QUrl::FormattingOptions options=QUrl::RemoveFragment) const;
+	QByteArray getPageURLEncoded(QUrl::FormattingOptions options) const;
 	const QList<QUrl> &getPageLinks() const;
 signals:
 	void pageLoadingSuccess();

@@ -99,7 +99,6 @@ void WebPageProcessor::extractPageLinks()
 						{
 							processedUrl=QUrl(hrefQString);
 						}
-						processedUrl=processedUrl.adjusted(QUrl::RemoveFragment);
 						if (processedUrl.isValid())
 						{
 							mPageLinks.append(processedUrl);
