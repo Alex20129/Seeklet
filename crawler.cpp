@@ -81,6 +81,11 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 
 	QJsonObject rawlerConfigJsonObject = crawlerConfigJsonDoc.object();
 
+	if(rawlerConfigJsonObject.value("http_user_agent").isString())
+	{
+		this->setHttpUserAgent(rawlerConfigJsonObject.value("http_user_agent").toString());
+	}
+
 	if(rawlerConfigJsonObject.value("allowed_url_schemes").isArray())
 	{
 		const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();

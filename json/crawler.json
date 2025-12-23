@@ -1,4 +1,5 @@
 {
+	"http_user_agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0",
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/21091000/how-to-get-thread-id-of-a-pthread-in-linux-c-program",
