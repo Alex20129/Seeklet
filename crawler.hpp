@@ -21,7 +21,6 @@ class Crawler : public QObject
 	QHash<QString, QStringList*> mCrawlingZones;
 	QSet<uint64_t> mVisitedURLsHashes;
 	static QSet<QString> sHostnameBlacklist;
-	void swapURLLists();
 private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();

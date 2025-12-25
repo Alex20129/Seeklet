@@ -37,11 +37,6 @@ Crawler::~Crawler()
 	delete mURLListActive;
 }
 
-void Crawler::swapURLLists()
-{
-	qSwap(mURLListActive, mURLListQueued);
-}
-
 int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 {
 	qDebug("Crawler::loadSettingsFromJSONFile");
@@ -158,7 +153,7 @@ void Crawler::loadNextPage()
 	qDebug("Crawler::loadNextPage");
 	if (mURLListActive->isEmpty())
 	{
-		swapURLLists();
+		qSwap(mURLListActive, mURLListQueued);
 		if (mURLListActive->isEmpty())
 		{
 			emit finished(this);
