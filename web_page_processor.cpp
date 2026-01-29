@@ -121,7 +121,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
+	mProfile->setHttpUserAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0");
+	createNewWebPage();
 	mJSCooldownTimer=new QTimer(this);
 	mJSCooldownTimer->setSingleShot(1);
 	mJSCooldownTimer->setInterval(3000);
@@ -141,15 +142,15 @@ void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 
 void WebPageProcessor::setWindowSize(const QSize &window_size)
 {
-	mWindowSize=window_size;
-	if(mWindowSize.width()>0 && mWindowSize.height()>0)
+	if(window_size.width()>0 && window_size.height()>0)
 	{
-		mWebViewWidget->resize(mWindowSize);
+		mWindowSize=window_size;
 	}
 	else
 	{
-		mWebViewWidget->resize(mWebViewWidget->screen()->size());
+		mWindowSize=mWebViewWidget->screen()->size();
 	}
+	mWebViewWidget->resize(mWindowSize);
 }
 
 void WebPageProcessor::setJSCooldownInterval(int64_t interval_ms)
