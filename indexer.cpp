@@ -1,4 +1,3 @@
-#include <QDebug>
 #include "indexer.hpp"
 
 PageMetadata::PageMetadata()
@@ -52,25 +51,30 @@ Indexer::~Indexer()
 //TODO: init, save, load
 void Indexer::initialize(const QString &db_path)
 {
-	qDebug("Indexer::initialize");
-	qDebug()<<db_path;
+	if(db_path.isEmpty())
+	{
+		return;
+	}
 }
 
 void Indexer::load(const QString &db_path)
 {
-	qDebug("Indexer::load");
-	qDebug()<<db_path;
+	if(db_path.isEmpty())
+	{
+		return;
+	}
 }
 
 void Indexer::save(const QString &db_path)
 {
-	qDebug("Indexer::save");
-	qDebug()<<db_path;
+	if(db_path.isEmpty())
+	{
+		return;
+	}
 }
 
 void Indexer::merge(const Indexer &other)
 {
-	qDebug("Indexer::merge");
 	size_t newPages=localIndexByContentHash.size();
 	QHash<uint64_t, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = other.localIndexByContentHash.constBegin(); cHashIt != other.localIndexByContentHash.constEnd(); cHashIt++)
@@ -97,7 +101,6 @@ void Indexer::merge(const Indexer &other)
 		localIndexTableOfContents[word].unite(cHashes);
 	}
 	newWords=localIndexTableOfContents.size()-newWords;
-	qDebug() << "Done." << newPages << "pages and" << newWords << "new words were added.";
 }
 
 const PageMetadata *Indexer::getPageMetadataByContentHash(uint64_t content_hash) const

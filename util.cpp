@@ -1,6 +1,6 @@
 #include <QRegularExpression>
-#include <QSet>
 #include "util.hpp"
+#include "simple_hash_func.hpp"
 
 QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text)
 {

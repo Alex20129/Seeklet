@@ -1,7 +1,6 @@
 #ifndef INDEXER_HPP
 #define INDEXER_HPP
 
-#include <QObject>
 #include <QUrl>
 #include <QMap>
 #include <QStringList>

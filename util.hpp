@@ -3,7 +3,6 @@
 
 #include <QMap>
 #include <QString>
-#include "simple_hash_func.hpp"
 
 QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text);
 

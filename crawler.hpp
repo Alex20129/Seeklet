@@ -1,8 +1,6 @@
 #ifndef CRAWLER_HPP
 #define CRAWLER_HPP
 
-#include <QObject>
-#include <QMutex>
 #include <QTimer>
 #include <QRandomGenerator>
 #include "web_page_processor.hpp"
