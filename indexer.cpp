@@ -75,7 +75,6 @@ void Indexer::save(const QString &db_path)
 
 void Indexer::merge(const Indexer &other)
 {
-	size_t newPages=localIndexByContentHash.size();
 	QHash<uint64_t, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = other.localIndexByContentHash.constBegin(); cHashIt != other.localIndexByContentHash.constEnd(); cHashIt++)
 	{
@@ -91,8 +90,6 @@ void Indexer::merge(const Indexer &other)
 			}
 		}
 	}
-	newPages=localIndexByContentHash.size()-newPages;
-	size_t newWords=localIndexTableOfContents.size();
 	QHash<QString, QSet<uint64_t>>::const_iterator tocIt;
 	for(tocIt = other.localIndexTableOfContents.constBegin(); tocIt != other.localIndexTableOfContents.constEnd(); tocIt++)
 	{
@@ -100,7 +97,6 @@ void Indexer::merge(const Indexer &other)
 		const QSet<uint64_t> &cHashes = other.localIndexTableOfContents[word];
 		localIndexTableOfContents[word].unite(cHashes);
 	}
-	newWords=localIndexTableOfContents.size()-newWords;
 }
 
 const PageMetadata *Indexer::getPageMetadataByContentHash(uint64_t content_hash) const
