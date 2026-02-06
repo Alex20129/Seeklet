@@ -17,7 +17,6 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mLoadingIntervalTimer=new QTimer(this);
 	mWebPageProcessor=new WebPageProcessor(this);
 	mIndexer=new Indexer(this);
-	mIndexer->initialize("in_test.bin");
 	mLoadingIntervalTimer->setSingleShot(1);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 	connect(mLoadingIntervalTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
@@ -82,6 +81,11 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 		this->setHttpUserAgent(rawlerConfigJsonObject.value("http_user_agent").toString());
 	}
 
+	if(rawlerConfigJsonObject.value("indexer_database_directory").isString())
+	{
+		this->setDatabaseDirectory(rawlerConfigJsonObject.value("indexer_database_directory").toString());
+	}
+
 	if(rawlerConfigJsonObject.value("allowed_url_schemes").isArray())
 	{
 		const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();
@@ -136,17 +140,22 @@ void Crawler::setWindowSize(const QSize &window_size)
 	mWebPageProcessor->setWindowSize(window_size);
 }
 
+void Crawler::setDatabaseDirectory(const QString &database_directory)
+{
+	mIndexer->setDatabaseDirectory(database_directory);
+}
+
+QString Crawler::getDatabaseDirectory() const
+{
+	return mIndexer->getDatabaseDirectory();
+}
+
 void Crawler::addAllowedURLScheme(const QString &scheme)
 {
 	if(!scheme.isEmpty())
 	{
 		mAllowedURLSchemes.append(scheme);
 	}
-}
-
-const Indexer *Crawler::getIndexer() const
-{
-	return mIndexer;
 }
 
 void Crawler::loadNextPage()
@@ -187,7 +196,7 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
 	pageMetadata.wordsTotal = 0;
-	QMap<QString, uint64_t>::ConstIterator pageWordsIt;
+	QMap<QString, quint64>::ConstIterator pageWordsIt;
 	for(pageWordsIt=pageMetadata.words.constBegin(); pageWordsIt!=pageMetadata.words.constEnd(); pageWordsIt++)
 	{
 		pageMetadata.wordsTotal += pageWordsIt.value();
@@ -372,6 +381,18 @@ void Crawler::addCrawlingZone(const QUrl &zone_prefix)
 		zonePrefixList->append(zonePrefixString);
 		mCrawlingZones.insert(zone_prefix.host(), zonePrefixList);
 	}
+}
+
+void Crawler::saveIndex()
+{
+	qDebug("Crawler::saveIndex");
+	mIndexer->save(QStringLiteral(""));
+}
+
+void Crawler::loadIndex()
+{
+	qDebug("Crawler::loadIndex");
+	mIndexer->load(QStringLiteral(""));
 }
 
 void Crawler::start()

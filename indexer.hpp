@@ -1,37 +1,41 @@
 #ifndef INDEXER_HPP
 #define INDEXER_HPP
 
-#include <QUrl>
 #include <QMap>
 #include <QStringList>
 #include <QDateTime>
+#include <QDataStream>
 
 struct PageMetadata
 {
-	uint64_t urlHash;
-	uint64_t contentHash;
-	uint64_t wordsTotal;
+	quint64 urlHash;
+	quint64 contentHash;
+	quint64 wordsTotal;
 	QDateTime timeStamp;
 	QString title;
 	QByteArray url;
-	QMap<QString, uint64_t> words;
+	QMap<QString, quint64> words;
 	PageMetadata();
+	void WriteToStream(QDataStream &stream) const;
+	void ReadFromStream(QDataStream &stream);
 	bool isValid() const;
 };
 
 class Indexer : public QObject
 {
 	Q_OBJECT
-	QHash<QString, QSet<uint64_t>> localIndexTableOfContents;
-	QHash<uint64_t, PageMetadata *> localIndexByContentHash;
-	QHash<uint64_t, PageMetadata *> localIndexByUrlHash;
+	QHash<QString, QSet<quint64>> localIndexTableOfContents;
+	QHash<quint64, PageMetadata *> localIndexByContentHash;
+	QHash<quint64, PageMetadata *> localIndexByUrlHash;
+	QString mDatabaseDirectory;
 public:
 	Indexer(QObject *parent = nullptr);
 	~Indexer();
-	//TODO: init, save, load
-	void initialize(const QString &db_path);
-	void load(const QString &db_path);
-	void save(const QString &db_path);
+	void clear();
+	void setDatabaseDirectory(const QString &database_directory);
+	QString getDatabaseDirectory() const;
+	void save(const QString &database_directory);
+	void load(const QString &database_directory);
 	void merge(const Indexer &other);
 	const PageMetadata *getPageMetadataByContentHash(uint64_t content_hash) const;
 	const PageMetadata *getPageMetadataByUrlHash(uint64_t url_hash) const;

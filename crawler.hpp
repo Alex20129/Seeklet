@@ -31,12 +31,15 @@ public:
 	void setPathToFirefoxProfile(const QString &path_to_ff_profile);
 	void setHttpUserAgent(const QString &user_agent);
 	void setWindowSize(const QSize &window_size);
+	void setDatabaseDirectory(const QString &database_directory);
+	QString getDatabaseDirectory() const;
 	void addAllowedURLScheme(const QString &scheme);
-	const Indexer *getIndexer() const;
 	void addURLsToQueue(const QList<QUrl> &urls);
 	void addURLToQueue(const QUrl &url);
 	void addHostnameToBlacklist(const QString &hostname);
 	void addCrawlingZone(const QUrl &zone_url);
+	void saveIndex();
+	void loadIndex();
 public slots:
 	void start();
 	void stop();

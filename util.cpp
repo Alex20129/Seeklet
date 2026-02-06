@@ -2,12 +2,12 @@
 #include "util.hpp"
 #include "simple_hash_func.hpp"
 
-QMap<QString, uint64_t> ExtractWordsAndFrequencies(const QString &text)
+QMap<QString, quint64> ExtractWordsAndFrequencies(const QString &text)
 {
 	const QString lowerText=text.toLower();
 	static const QRegularExpression wordsRegex("[^a-zа-яё]+");
 	static const QRegularExpression digitsRegex("^[0-9]+$");
-	QMap<QString, uint64_t> wordMap;
+	QMap<QString, quint64> wordMap;
 	const QStringList words = lowerText.split(wordsRegex, Qt::SkipEmptyParts);
 	for (const QString &word : words)
 	{

@@ -1,10 +1,33 @@
 #include "indexer.hpp"
+#include <QDir>
 
 PageMetadata::PageMetadata()
 {
 	urlHash=0;
 	contentHash=0;
 	wordsTotal=0;
+}
+
+void PageMetadata::WriteToStream(QDataStream &stream) const
+{
+	stream << this->urlHash;
+	stream << this->contentHash;
+	stream << this->wordsTotal;
+	stream << this->timeStamp;
+	stream << this->title;
+	stream << this->url;
+	stream << this->words;
+}
+
+void PageMetadata::ReadFromStream(QDataStream &stream)
+{
+	stream >> this->urlHash;
+	stream >> this->contentHash;
+	stream >> this->wordsTotal;
+	stream >> this->timeStamp;
+	stream >> this->title;
+	stream >> this->url;
+	stream >> this->words;
 }
 
 bool PageMetadata::isValid() const
@@ -43,31 +66,117 @@ Indexer::Indexer(QObject *parent) : QObject(parent)
 
 Indexer::~Indexer()
 {
+	this->clear();
+}
+
+void Indexer::clear()
+{
 	qDeleteAll(localIndexByContentHash);
 	localIndexByContentHash.clear();
 	localIndexByUrlHash.clear();
+	localIndexTableOfContents.clear();
 }
 
-//TODO: init, save, load
-void Indexer::initialize(const QString &db_path)
+void Indexer::setDatabaseDirectory(const QString &database_directory)
 {
-	if(db_path.isEmpty())
+	qDebug("Indexer::setDatabaseDirectory");
+	if(database_directory.isEmpty())
 	{
 		return;
 	}
+	QDir dir(database_directory);
+	if(!dir.exists())
+	{
+		if(!dir.mkpath("."))
+		{
+			qDebug() << "Failed to create database directory:" << database_directory;
+			return;
+		}
+		qDebug() << "Created new database directory:" << database_directory;
+	}
+	else
+	{
+		qDebug() << "Existing database directory will be used:" << database_directory;
+	}
+	mDatabaseDirectory=database_directory;
 }
 
-void Indexer::load(const QString &db_path)
+QString Indexer::getDatabaseDirectory() const
 {
-	if(db_path.isEmpty())
+	return mDatabaseDirectory;
+}
+
+void Indexer::save(const QString &database_directory)
+{
+	qDebug("Indexer::save");
+	if(!database_directory.isEmpty())
+	{
+		setDatabaseDirectory(database_directory);
+	}
+	if(mDatabaseDirectory.isEmpty())
 	{
 		return;
 	}
+
+	QDir dbDir(mDatabaseDirectory);
+	if (!dbDir.exists())
+	{
+		qDebug() << "Indexer::save: Directory does not exist, cannot save to:" << mDatabaseDirectory;
+		return;
+	}
+
+	quint64 dataStreamVersion=QDataStream::Qt_6_0;
+
+	QString tocFilePath = dbDir.filePath("index_toc.dat");
+	QString mdFilePath = dbDir.filePath("index_md.dat");
+
+	QFile tocFile(tocFilePath);
+	if (!tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		qDebug() << "Could not open file for writing:" << tocFilePath;
+		return;
+	}
+	QDataStream tocFileStream(&tocFile);
+	tocFileStream.setVersion(QDataStream::Qt_6_0);
+	tocFileStream << dataStreamVersion;
+	tocFileStream << localIndexTableOfContents;
+	tocFile.close();
+	qDebug() << "Saved TOC file:" << tocFilePath;
+
+	QFile mdFile(mdFilePath);
+	if (!mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		qDebug() << "Could not open file for writing:" << mdFilePath;
+		return;
+	}
+	QDataStream mdFileStream(&mdFile);
+	mdFileStream.setVersion(QDataStream::Qt_6_0);
+	mdFileStream << dataStreamVersion;
+	quint64 numOfPages = localIndexByContentHash.size();
+	mdFileStream << numOfPages;
+
+	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
+	for(cHashIt = localIndexByContentHash.constBegin(); cHashIt!=localIndexByContentHash.constEnd(); cHashIt++)
+	{
+		const PageMetadata *pm = cHashIt.value();
+		if(nullptr!=pm)
+		{
+			pm->WriteToStream(mdFileStream);
+		}
+	}
+
+	mdFile.close();
+	qDebug() << "Saved MD file:" << mdFilePath;
 }
 
-void Indexer::save(const QString &db_path)
+void Indexer::load(const QString &database_directory)
 {
-	if(db_path.isEmpty())
+	qDebug("Indexer::load");
+	if(!database_directory.isEmpty())
+	{
+		setDatabaseDirectory(database_directory);
+	}
+	if(mDatabaseDirectory.isEmpty())
 	{
 		return;
 	}
@@ -75,10 +184,10 @@ void Indexer::save(const QString &db_path)
 
 void Indexer::merge(const Indexer &other)
 {
-	QHash<uint64_t, PageMetadata *>::const_iterator cHashIt;
+	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = other.localIndexByContentHash.constBegin(); cHashIt != other.localIndexByContentHash.constEnd(); cHashIt++)
 	{
-		const uint64_t contentHash = cHashIt.key();
+		const quint64 contentHash = cHashIt.key();
 		if(!localIndexByContentHash.contains(contentHash))
 		{
 			const PageMetadata *pageMetaDataPtr=other.localIndexByContentHash[contentHash];
@@ -90,11 +199,11 @@ void Indexer::merge(const Indexer &other)
 			}
 		}
 	}
-	QHash<QString, QSet<uint64_t>>::const_iterator tocIt;
+	QHash<QString, QSet<quint64>>::const_iterator tocIt;
 	for(tocIt = other.localIndexTableOfContents.constBegin(); tocIt != other.localIndexTableOfContents.constEnd(); tocIt++)
 	{
 		const QString &word = tocIt.key();
-		const QSet<uint64_t> &cHashes = other.localIndexTableOfContents[word];
+		const QSet<quint64> &cHashes = other.localIndexTableOfContents[word];
 		localIndexTableOfContents[word].unite(cHashes);
 	}
 }
@@ -133,17 +242,17 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 		}
 	}
 	words.removeAll(smallestSetKey);
-	QSet<uint64_t> pageSubsetIntersection=localIndexTableOfContents[smallestSetKey];
+	QSet<quint64> pageSubsetIntersection=localIndexTableOfContents[smallestSetKey];
 	for(const QString &word : words)
 	{
-		const QSet<uint64_t> &pageSubset=localIndexTableOfContents[word];
+		const QSet<quint64> &pageSubset=localIndexTableOfContents[word];
 		pageSubsetIntersection.intersect(pageSubset);
 		if(pageSubsetIntersection.isEmpty())
 		{
 			return searchResults;
 		}
 	}
-	for(uint64_t hash : pageSubsetIntersection)
+	for(quint64 hash : pageSubsetIntersection)
 	{
 		const PageMetadata *searchResult=localIndexByContentHash.value(hash, nullptr);
 		if(nullptr!=searchResult)
@@ -199,7 +308,7 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 	{
 		return 0.0;
 	}
-	const QSet<uint64_t> &pageSubset=localIndexTableOfContents[word];
+	const QSet<quint64> &pageSubset=localIndexTableOfContents[word];
 	if(pageSubset.isEmpty())
 	{
 		return 0.0;
@@ -269,7 +378,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
 	localIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
 	localIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
-	QMap<QString, uint64_t>::const_iterator wordsIt;
+	QMap<QString, quint64>::const_iterator wordsIt;
 	for(wordsIt = pageMetaDataCopy->words.constBegin(); wordsIt != pageMetaDataCopy->words.constEnd(); wordsIt++)
 	{
 		const QString word = wordsIt.key();
