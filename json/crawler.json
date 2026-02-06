@@ -1,5 +1,6 @@
 {
 	"http_user_agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0",
+	"indexer_database_directory":"./indexer_database",
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/21091000/how-to-get-thread-id-of-a-pthread-in-linux-c-program",
@@ -13,7 +14,14 @@
 		"https://raspberrypi.stackexchange.com/questions/23884/force-ipv4-address",
 		"https://rutracker.org/forum/viewforum.php?f=2198",
 		"https://www.lostfilm.tv/series/Black_Mirror/seasons",
-		"https://habr.com/en/articles/481974/"
+		"https://habr.com/en/articles/481974/",
+		"https://www.aliexpress.com/sitemap.html",
+		"https://www.aliexpress.com/popular.html",
+		"https://www.aliexpress.com/wholesale.html",
+		"https://www.aliexpress.com/w/wholesale-cnc.html",
+		"https://www.aliexpress.com/w/wholesale-laser.html",
+		"https://www.aliexpress.com/w/wholesale-screwdriver.html",
+		"https://www.aliexpress.com/w/wholesale-mega-2560.html"
 	],
 	"allowed_url_schemes":
 	[
@@ -34,10 +42,14 @@
 		"https://rutracker.org/forum/",
 		"https://www.lostfilm.tv/series/",
 		"https://habr.com/en/articles/",
-		"https://habr.com/en/hubs/"
+		"https://habr.com/en/hubs/",
+		"https://www.aliexpress.com/item/",
+		"https://www.aliexpress.com/w/"
 	],
 	"black_list":
 	[
+		"www.reddit.com",
+		"x.com",
 		"discord.gg",
 		"www.bing.com",
 		"shop.github.com",
@@ -50,6 +62,24 @@
 		"video.search.yahoo.com",
 		"news.search.yahoo.com",
 		"help.yahoo.com",
+		"login.aliexpress.com",
+		"campaign.aliexpress.com",
+		"so.aliexpress.com",
+		"report.aliexpress.com",
+		"ru.aliexpress.com",
+		"pt.aliexpress.com",
+		"es.aliexpress.com",
+		"fr.aliexpress.com",
+		"de.aliexpress.com",
+		"it.aliexpress.com",
+		"nl.aliexpress.com",
+		"tr.aliexpress.com",
+		"ja.aliexpress.com",
+		"ko.aliexpress.com",
+		"th.aliexpress.com",
+		"ar.aliexpress.com",
+		"he.aliexpress.com",
+		"pl.aliexpress.com",
 		"account.habr.com",
 		"www.youtube.com",
 		"youtube.com",
