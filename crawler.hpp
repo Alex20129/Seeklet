@@ -38,15 +38,15 @@ public:
 	void addURLToQueue(const QUrl &url);
 	void addHostnameToBlacklist(const QString &hostname);
 	void addCrawlingZone(const QUrl &zone_url);
+public slots:
 	void saveIndex();
 	void loadIndex();
-public slots:
 	void start();
 	void stop();
 	void searchTest();
 signals:
-	void started(Crawler *crawler);
-	void finished(Crawler *crawler);
+	void started();
+	void finished();
 	void needToIndexNewPage(PageMetadata page_metadata);
 };
 

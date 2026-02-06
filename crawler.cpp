@@ -166,7 +166,7 @@ void Crawler::loadNextPage()
 		qSwap(mURLListActive, mURLListQueued);
 		if (mURLListActive->isEmpty())
 		{
-			emit finished(this);
+			emit finished();
 			return;
 		}
 	}
@@ -403,7 +403,7 @@ void Crawler::start()
 	{
 		mLoadingIntervalTimer->setInterval(mRNG->bounded(PAGE_LOADING_INTERVAL_MIN, PAGE_LOADING_INTERVAL_MAX));
 		mLoadingIntervalTimer->start();
-		emit started(this);
+		emit started();
 	}
 }
 
@@ -433,7 +433,7 @@ void Crawler::stop()
 #endif
 	mURLListActive->clear();
 	mURLListQueued->clear();
-	emit finished(this);
+	emit finished();
 }
 
 void Crawler::searchTest()
