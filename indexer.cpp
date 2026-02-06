@@ -80,25 +80,26 @@ void Indexer::clear()
 void Indexer::setDatabaseDirectory(const QString &database_directory)
 {
 	qDebug("Indexer::setDatabaseDirectory");
-	if(database_directory.isEmpty())
+	mDatabaseDirectory=database_directory;
+	if(mDatabaseDirectory.isEmpty())
 	{
+		qDebug() << "Path is empty.";
 		return;
 	}
-	QDir dir(database_directory);
+	QDir dir(mDatabaseDirectory);
 	if(!dir.exists())
 	{
 		if(!dir.mkpath("."))
 		{
-			qDebug() << "Failed to create database directory:" << database_directory;
+			qDebug() << "Failed to create database directory:" << mDatabaseDirectory;
 			return;
 		}
-		qDebug() << "Created new database directory:" << database_directory;
+		qDebug() << "Created new database directory:" << mDatabaseDirectory;
 	}
 	else
 	{
-		qDebug() << "Existing database directory will be used:" << database_directory;
+		qDebug() << "Existing database directory will be used:" << mDatabaseDirectory;
 	}
-	mDatabaseDirectory=database_directory;
 }
 
 QString Indexer::getDatabaseDirectory() const
@@ -117,11 +118,10 @@ void Indexer::save(const QString &database_directory)
 	{
 		return;
 	}
-
 	QDir dbDir(mDatabaseDirectory);
 	if (!dbDir.exists())
 	{
-		qDebug() << "Indexer::save: Directory does not exist, cannot save to:" << mDatabaseDirectory;
+		qDebug() << "Directory does not exist, cannot save to:" << mDatabaseDirectory;
 		return;
 	}
 
@@ -154,7 +154,6 @@ void Indexer::save(const QString &database_directory)
 	mdFileStream << dataStreamVersion;
 	quint64 numOfPages = localIndexByContentHash.size();
 	mdFileStream << numOfPages;
-
 	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = localIndexByContentHash.constBegin(); cHashIt!=localIndexByContentHash.constEnd(); cHashIt++)
 	{
@@ -164,7 +163,6 @@ void Indexer::save(const QString &database_directory)
 			pm->WriteToStream(mdFileStream);
 		}
 	}
-
 	mdFile.close();
 	qDebug() << "Saved MD file:" << mdFilePath;
 }
@@ -180,6 +178,17 @@ void Indexer::load(const QString &database_directory)
 	{
 		return;
 	}
+	QDir dbDir(mDatabaseDirectory);
+	if (!dbDir.exists())
+	{
+		qDebug() << "Directory does not exist, cannot save to:" << mDatabaseDirectory;
+		return;
+	}
+
+	quint64 dataStreamVersion=QDataStream::Qt_6_0;
+
+	QString tocFilePath = dbDir.filePath("index_toc.dat");
+	QString mdFilePath = dbDir.filePath("index_md.dat");
 }
 
 void Indexer::merge(const Indexer &other)

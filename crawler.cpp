@@ -260,9 +260,7 @@ void Crawler::onPageProcessingFinished()
 	{
 		qWarning() << "Failed to open page_words.txt";
 	}
-#endif
 
-#ifndef NDEBUG
 	if(++visited_n>=100)
 	{
 		stop();
@@ -427,6 +425,7 @@ void Crawler::stop()
 			qDebug() << pageMDPtr->timeStamp.toString();
 			qDebug() << pageMDPtr->urlHash;
 			qDebug() << pageMDPtr->contentHash;
+			qDebug() << pageMDPtr->words.keys();
 			qDebug() << "====";
 		}
 	}
@@ -436,11 +435,12 @@ void Crawler::stop()
 	emit finished();
 }
 
+#ifndef NDEBUG
 void Crawler::searchTest()
 {
 	qDebug("Crawler::searchTest");
 	QStringList words;
-	words.append("qtwebengine");
+	words.append("meaning of life");
 	const QVector<const PageMetadata *> searchResults=mIndexer->searchPagesByWords(words);
 	for(const PageMetadata *page : searchResults)
 	{
@@ -452,3 +452,4 @@ void Crawler::searchTest()
 		qDebug() << "====";
 	}
 }
+#endif

@@ -43,7 +43,9 @@ public slots:
 	void loadIndex();
 	void start();
 	void stop();
+#ifndef NDEBUG
 	void searchTest();
+#endif
 signals:
 	void started();
 	void finished();
