@@ -24,7 +24,7 @@ public:
 	const QString &httpUserAgent() const;
 
 	void setDatabaseDirectory(const QString &database_directory);
-	const QString &DatabaseDirectory() const;
+	const QString &databaseDirectory() const;
 
 	void setCrawlerWindowWidth(int crawler_window_width);
 	void setCrawlerWindowHeight(int crawler_window_height);

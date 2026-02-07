@@ -29,7 +29,7 @@ void ConfigurationKeeper::setDatabaseDirectory(const QString &database_directory
 	mDatabaseDirectory=database_directory;
 }
 
-const QString &ConfigurationKeeper::DatabaseDirectory() const
+const QString &ConfigurationKeeper::databaseDirectory() const
 {
 	return mDatabaseDirectory;
 }

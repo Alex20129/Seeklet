@@ -9,7 +9,7 @@ PageMetadata::PageMetadata()
 	wordsTotal=0;
 }
 
-void PageMetadata::WriteToStream(QDataStream &stream) const
+void PageMetadata::writeToStream(QDataStream &stream) const
 {
 	stream << this->urlHash;
 	stream << this->contentHash;
@@ -20,7 +20,7 @@ void PageMetadata::WriteToStream(QDataStream &stream) const
 	stream << this->words;
 }
 
-void PageMetadata::ReadFromStream(QDataStream &stream)
+void PageMetadata::readFromStream(QDataStream &stream)
 {
 	stream >> this->urlHash;
 	stream >> this->contentHash;
@@ -152,7 +152,7 @@ void Indexer::save(const QString &database_directory)
 			const PageMetadata *pm = cHashIt.value();
 			if(nullptr!=pm)
 			{
-				pm->WriteToStream(mdFileStream);
+				pm->writeToStream(mdFileStream);
 			}
 		}
 		mdFile.close();
@@ -228,7 +228,7 @@ void Indexer::load(const QString &database_directory)
 			for(quint64 page=0; page<numOfPages; page++)
 			{
 				PageMetadata *newPageMetadata=new PageMetadata;
-				newPageMetadata->ReadFromStream(mdFileStream);
+				newPageMetadata->readFromStream(mdFileStream);
 				if(mIndexByUrlHash.contains(newPageMetadata->urlHash))
 				{
 					delete newPageMetadata;

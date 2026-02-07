@@ -16,8 +16,8 @@ struct PageMetadata
 	QByteArray url;
 	QMap<QString, quint64> words;
 	PageMetadata();
-	void WriteToStream(QDataStream &stream) const;
-	void ReadFromStream(QDataStream &stream);
+	void writeToStream(QDataStream &stream) const;
+	void readFromStream(QDataStream &stream);
 	bool isValid() const;
 };
 
