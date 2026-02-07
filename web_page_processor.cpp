@@ -12,7 +12,7 @@
 #include <QtSql/QSqlError>
 #include <htmlcxx/html/ParserDom.h>
 #include <htmlcxx/html/Uri.h>
-
+#include "configuration_keeper.hpp"
 #include "web_page_processor.hpp"
 
 void WebPageProcessor::createNewWebPage()

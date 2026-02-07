@@ -3,8 +3,9 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
-#include "util.hpp"
+#include "configuration_keeper.hpp"
 #include "crawler.hpp"
+#include "util.hpp"
 
 QSet<QString> Crawler::sHostnameBlacklist;
 

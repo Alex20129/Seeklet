@@ -1,8 +1,13 @@
-#include "main.hpp"
+#include <QApplication>
+#include <QTimer>
+#include "configuration_keeper.hpp"
 #include "crawler.hpp"
 
 int main(int argc, char **argv)
 {
+	gConfigurationKeeper = new ConfigurationKeeper();
+	gConfigurationKeeper->loadSettingsFromJsonFile("crawler.json");
+
 	QApplication fossenApp(argc, argv);
 
 	Crawler *myCrawler=new Crawler;

@@ -1,5 +1,6 @@
-#include "indexer.hpp"
 #include <QDir>
+#include "configuration_keeper.hpp"
+#include "indexer.hpp"
 
 PageMetadata::PageMetadata()
 {
