@@ -114,9 +114,8 @@ void WebPageProcessor::extractPageLinks()
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
 	mWebViewWidget=new QWebEngineView();
-	mWebViewWidget->setWindowFlags(Qt::FramelessWindowHint|Qt::BypassWindowManagerHint);
+	mWebViewWidget->setWindowFlags(Qt::WindowType::FramelessWindowHint);
 	mWebViewWidget->setAttribute(Qt::WA_DontShowOnScreen);
-	setWindowSize(QSize(0, 0));
 	mWebPage=nullptr;
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);

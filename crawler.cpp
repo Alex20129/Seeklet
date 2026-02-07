@@ -74,48 +74,59 @@ int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
 		return 55;
 	}
 
-	QJsonObject rawlerConfigJsonObject = crawlerConfigJsonDoc.object();
+	QJsonObject crawlerConfigJsonObject = crawlerConfigJsonDoc.object();
 
-	if(rawlerConfigJsonObject.value("http_user_agent").isString())
+	if(crawlerConfigJsonObject.value("http_user_agent").isString())
 	{
-		this->setHttpUserAgent(rawlerConfigJsonObject.value("http_user_agent").toString());
+		this->setHttpUserAgent(crawlerConfigJsonObject.value("http_user_agent").toString());
 	}
 
-	if(rawlerConfigJsonObject.value("indexer_database_directory").isString())
+	if(crawlerConfigJsonObject.value("indexer_database_directory").isString())
 	{
-		this->setDatabaseDirectory(rawlerConfigJsonObject.value("indexer_database_directory").toString());
+		this->setDatabaseDirectory(crawlerConfigJsonObject.value("indexer_database_directory").toString());
 	}
 
-	if(rawlerConfigJsonObject.value("allowed_url_schemes").isArray())
+	QSize crawlerWindowSize(0, 0);
+	if(crawlerConfigJsonObject.value("window_width").isDouble())
 	{
-		const QJsonArray &allowedURLSchemes=rawlerConfigJsonObject.value("allowed_url_schemes").toArray();
+		crawlerWindowSize.setWidth(crawlerConfigJsonObject.value("window_width").toDouble());
+	}
+	if(crawlerConfigJsonObject.value("window_height").isDouble())
+	{
+		crawlerWindowSize.setHeight(crawlerConfigJsonObject.value("window_height").toDouble());
+	}
+	this->setWindowSize(crawlerWindowSize);
+
+	if(crawlerConfigJsonObject.value("allowed_url_schemes").isArray())
+	{
+		const QJsonArray &allowedURLSchemes=crawlerConfigJsonObject.value("allowed_url_schemes").toArray();
 		for (const QJsonValue &allowedURLScheme : allowedURLSchemes)
 		{
 			this->addAllowedURLScheme(allowedURLScheme.toString());
 		}
 	}
 
-	if(rawlerConfigJsonObject.value("start_urls").isArray())
+	if(crawlerConfigJsonObject.value("start_urls").isArray())
 	{
-		const QJsonArray &startURLs=rawlerConfigJsonObject.value("start_urls").toArray();
+		const QJsonArray &startURLs=crawlerConfigJsonObject.value("start_urls").toArray();
 		for (const QJsonValue &startURL : startURLs)
 		{
 			this->addURLToQueue(startURL.toString());
 		}
 	}
 
-	if(rawlerConfigJsonObject.value("crawling_zones").isArray())
+	if(crawlerConfigJsonObject.value("crawling_zones").isArray())
 	{
-		const QJsonArray &crawlingZones=rawlerConfigJsonObject.value("crawling_zones").toArray();
+		const QJsonArray &crawlingZones=crawlerConfigJsonObject.value("crawling_zones").toArray();
 		for (const QJsonValue &crawlingZone : crawlingZones)
 		{
 			this->addCrawlingZone(crawlingZone.toString());
 		}
 	}
 
-	if(rawlerConfigJsonObject.value("black_list").isArray())
+	if(crawlerConfigJsonObject.value("black_list").isArray())
 	{
-		const QJsonArray &blHosts=rawlerConfigJsonObject.value("black_list").toArray();
+		const QJsonArray &blHosts=crawlerConfigJsonObject.value("black_list").toArray();
 		for (const QJsonValue &blHost : blHosts)
 		{
 			this->addHostnameToBlacklist(blHost.toString());

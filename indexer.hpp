@@ -24,9 +24,9 @@ struct PageMetadata
 class Indexer : public QObject
 {
 	Q_OBJECT
-	QHash<QString, QSet<quint64>> localIndexTableOfContents;
-	QHash<quint64, PageMetadata *> localIndexByContentHash;
-	QHash<quint64, PageMetadata *> localIndexByUrlHash;
+	QHash<QString, QSet<quint64>> mIndexTableOfContents;
+	QHash<quint64, PageMetadata *> mIndexByContentHash;
+	QHash<quint64, PageMetadata *> mIndexByUrlHash;
 	QString mDatabaseDirectory;
 public:
 	Indexer(QObject *parent = nullptr);
