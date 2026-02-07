@@ -79,26 +79,17 @@ void Indexer::clear()
 
 void Indexer::setDatabaseDirectory(const QString &database_directory)
 {
-	qDebug("Indexer::setDatabaseDirectory");
 	mDatabaseDirectory=database_directory;
-	if(mDatabaseDirectory.isEmpty())
+	if(!mDatabaseDirectory.isEmpty())
 	{
-		qDebug() << "Path is empty.";
-		return;
-	}
-	QDir dir(mDatabaseDirectory);
-	if(!dir.exists())
-	{
-		if(!dir.mkpath("."))
+		QDir dir(mDatabaseDirectory);
+		if(!dir.exists())
 		{
-			qDebug() << "Failed to create database directory:" << mDatabaseDirectory;
-			return;
+			if(!dir.mkpath("."))
+			{
+				mDatabaseDirectory.clear();
+			}
 		}
-		qDebug() << "Created new database directory:" << mDatabaseDirectory;
-	}
-	else
-	{
-		qDebug() << "Existing database directory will be used:" << mDatabaseDirectory;
 	}
 }
 
@@ -121,7 +112,7 @@ void Indexer::save(const QString &database_directory)
 	QDir dbDir(mDatabaseDirectory);
 	if (!dbDir.exists())
 	{
-		qDebug() << "Directory does not exist, cannot save to:" << mDatabaseDirectory;
+		qWarning() << "Directory does not exist, cannot save database to:" << mDatabaseDirectory;
 		return;
 	}
 
@@ -133,15 +124,18 @@ void Indexer::save(const QString &database_directory)
 	QFile tocFile(tocFilePath);
 	if (!tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
-		qDebug() << "Could not open file for writing:" << tocFilePath;
-		return;
+		qWarning() << "Could not open file for writing:" << tocFilePath;
 	}
-	QDataStream tocFileStream(&tocFile);
-	tocFileStream.setVersion(QDataStream::Qt_6_0);
-	tocFileStream << dataStreamVersion;
-	tocFileStream << localIndexTableOfContents;
-	tocFile.close();
-	qDebug() << "Saved TOC file:" << tocFilePath;
+	else
+	{
+		QDataStream tocFileStream(&tocFile);
+		tocFileStream.setVersion(QDataStream::Qt_6_0);
+		tocFileStream << dataStreamVersion;
+		tocFileStream << localIndexTableOfContents;
+		tocFile.close();
+		qDebug() << "Table of contents has been saved successfully.";
+		qDebug() << localIndexTableOfContents.size() << "entries saved:\n" << localIndexTableOfContents.keys();
+	}
 
 	QFile mdFile(mdFilePath);
 	if (!mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -181,14 +175,38 @@ void Indexer::load(const QString &database_directory)
 	QDir dbDir(mDatabaseDirectory);
 	if (!dbDir.exists())
 	{
-		qDebug() << "Directory does not exist, cannot save to:" << mDatabaseDirectory;
+		qWarning() << "Directory does not exist, cannot load database from:" << mDatabaseDirectory;
 		return;
 	}
 
-	quint64 dataStreamVersion=QDataStream::Qt_6_0;
+	quint64 dataStreamVersion;
 
 	QString tocFilePath = dbDir.filePath("index_toc.dat");
 	QString mdFilePath = dbDir.filePath("index_md.dat");
+
+	QFile tocFile(tocFilePath);
+	if (!tocFile.open(QIODevice::ReadOnly))
+	{
+		qWarning() << "Could not open file for reading:" << tocFilePath;
+	}
+	else
+	{
+		QDataStream tocFileStream(&tocFile);
+		tocFileStream.setVersion(QDataStream::Qt_6_0);
+		tocFileStream >> dataStreamVersion;
+		if(dataStreamVersion!=(quint64)(QDataStream::Qt_6_0))
+		{
+			qDebug() << "Unknown file version. Cannot load data from:" << tocFilePath;
+		}
+		else
+		{
+			localIndexTableOfContents.clear();
+			tocFileStream >> localIndexTableOfContents;
+			qDebug() << "Table of contents has been loaded successfully.";
+			qDebug() << localIndexTableOfContents.size() << "entries loaded:\n" << localIndexTableOfContents.keys();
+		}
+		tocFile.close();
+	}
 }
 
 void Indexer::merge(const Indexer &other)
