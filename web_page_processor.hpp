@@ -18,7 +18,6 @@ class WebPageProcessor : public QObject
 	QString mPageContentHTML;
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;
-	QSize mWindowSize;
 	void createNewWebPage();
 private slots:
 	void waitForJSToFinish(bool ok);

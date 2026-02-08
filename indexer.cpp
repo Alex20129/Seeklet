@@ -63,6 +63,7 @@ bool PageMetadata::isValid() const
 
 Indexer::Indexer(QObject *parent) : QObject(parent)
 {
+	setDatabaseDirectory(gSettings->databaseDirectory());
 }
 
 Indexer::~Indexer()
@@ -94,7 +95,7 @@ void Indexer::setDatabaseDirectory(const QString &database_directory)
 	}
 }
 
-QString Indexer::getDatabaseDirectory() const
+const QString &Indexer::getDatabaseDirectory() const
 {
 	return mDatabaseDirectory;
 }

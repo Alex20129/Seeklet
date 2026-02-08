@@ -4,7 +4,7 @@
 #include <QJsonArray>
 #include "configuration_keeper.hpp"
 
-ConfigurationKeeper *gConfigurationKeeper=nullptr;
+ConfigurationKeeper *gSettings=nullptr;
 
 ConfigurationKeeper::ConfigurationKeeper(QObject *parent) : QObject(parent)
 {
@@ -34,6 +34,16 @@ const QString &ConfigurationKeeper::databaseDirectory() const
 	return mDatabaseDirectory;
 }
 
+void ConfigurationKeeper::setFireFoxProfileDirectory(const QString &firefox_profile_directory)
+{
+	mFireFoxProfileDirectory=firefox_profile_directory;
+}
+
+const QString &ConfigurationKeeper::fireFoxProfileDirectory() const
+{
+	return mFireFoxProfileDirectory;
+}
+
 void ConfigurationKeeper::setCrawlerWindowWidth(int crawler_window_width)
 {
 	mCrawlerWindowSize.setWidth(crawler_window_width);
@@ -60,11 +70,10 @@ void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
 	{
 		return;
 	}
-	if(mAllowedURLSchemes.contains(allowed_url_scheme))
+	if(!mAllowedURLSchemes.contains(allowed_url_scheme))
 	{
-		return;
+		mAllowedURLSchemes.append(allowed_url_scheme);
 	}
-	mAllowedURLSchemes.append(allowed_url_scheme);
 }
 
 void ConfigurationKeeper::removeAllowedUrlScheme(const QString &allowed_url_scheme)
@@ -77,25 +86,24 @@ const QStringList &ConfigurationKeeper::allowedUrlSchemes() const
 	return mAllowedURLSchemes;
 }
 
-void ConfigurationKeeper::addStartUrl(const QString &start_url)
+void ConfigurationKeeper::addStartUrl(const QUrl &start_url)
 {
-	if(start_url.isEmpty())
+	if(!start_url.isValid())
 	{
 		return;
 	}
-	if(mStartUrls.contains(start_url))
+	if(!mStartUrls.contains(start_url))
 	{
-		return;
+		mStartUrls.append(start_url);
 	}
-	mStartUrls.append(start_url);
 }
 
-void ConfigurationKeeper::removeStartUrl(const QString &start_url)
+void ConfigurationKeeper::removeStartUrl(const QUrl &start_url)
 {
 	mStartUrls.removeAll(start_url);
 }
 
-const QStringList &ConfigurationKeeper::startUrls() const
+const QList<QUrl> &ConfigurationKeeper::startUrls() const
 {
 	return mStartUrls;
 }
@@ -106,19 +114,18 @@ void ConfigurationKeeper::addBlacklistedHost(const QString &blacklisted_host)
 	{
 		return;
 	}
-	if(mBlacklistedHosts.contains(blacklisted_host))
+	if(!mBlacklistedHosts.contains(blacklisted_host))
 	{
-		return;
+		mBlacklistedHosts.insert(blacklisted_host);
 	}
-	mBlacklistedHosts.append(blacklisted_host);
 }
 
 void ConfigurationKeeper::removeBlacklistedHost(const QString &blacklisted_host)
 {
-	mBlacklistedHosts.removeAll(blacklisted_host);
+	mBlacklistedHosts.remove(blacklisted_host);
 }
 
-const QStringList &ConfigurationKeeper::blacklistedHosts() const
+const QSet<QString> &ConfigurationKeeper::blacklistedHosts() const
 {
 	return mBlacklistedHosts;
 }
@@ -129,11 +136,10 @@ void ConfigurationKeeper::addCrawlingZone(const QUrl &crawling_zone)
 	{
 		return;
 	}
-	if(mCrawlingZones[crawling_zone.host()].contains(crawling_zone.toString()))
+	if(!mCrawlingZones[crawling_zone.host()].contains(crawling_zone.toString()))
 	{
-		return;
+		mCrawlingZones[crawling_zone.host()].append(crawling_zone.toString());
 	}
-	mCrawlingZones[crawling_zone.host()].append(crawling_zone.toString());
 }
 
 void ConfigurationKeeper::removeCrawlingZone(const QUrl &crawling_zone)
@@ -195,6 +201,10 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	if(configJsonObject.value("database_directory").isString())
 	{
 		this->setDatabaseDirectory(configJsonObject.value("database_directory").toString());
+	}
+	if(configJsonObject.value("firefox_profile_directory").isString())
+	{
+		this->setFireFoxProfileDirectory(configJsonObject.value("firefox_profile_directory").toString());
 	}
 	if(configJsonObject.value("crawler_window_width").isDouble())
 	{

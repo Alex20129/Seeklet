@@ -1,8 +1,9 @@
 {
 	"http_user_agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0",
-	"indexer_database_directory":"./indexer_database",
-	"window_width":0,
-	"window_height":0,
+	"firefox_profile_directory":"/home/username/snap/firefox/common/.mozilla/firefox/profiles.ini",
+	"database_directory":"./indexer_database",
+	"crawler_window_width":0,
+	"crawler_window_height":0,
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/tagged/linux",

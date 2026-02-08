@@ -7,8 +7,6 @@
 #include "crawler.hpp"
 #include "util.hpp"
 
-QSet<QString> Crawler::sHostnameBlacklist;
-
 Crawler::Crawler(QObject *parent) : QObject(parent)
 {
 	uint32_t rngSeed=QDateTime::currentSecsSinceEpoch()+reinterpret_cast<uintptr_t>(this);
@@ -22,161 +20,24 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 	connect(mLoadingIntervalTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 	connect(this, &Crawler::needToIndexNewPage, mIndexer, &Indexer::addPage);
+	addURLsToQueue(gSettings->startUrls());
 }
 
 Crawler::~Crawler()
 {
 	stop();
-	const QList<QStringList*> crawlingZones(mCrawlingZones.values());
-	mCrawlingZones.clear();
-	for(QStringList *crawlingZone : crawlingZones)
-	{
-		delete crawlingZone;
-	}
 	delete mRNG;
 	delete mURLListQueued;
 	delete mURLListActive;
 }
 
-int Crawler::loadSettingsFromJSONFile(const QString &path_to_file)
-{
-	qDebug("Crawler::loadSettingsFromJSONFile");
-
-	QFile crawlerConfigFile(path_to_file);
-
-	if (!crawlerConfigFile.exists())
-	{
-		qDebug() << path_to_file << "doesn't exist";
-		return 22;
-	}
-
-	if(!crawlerConfigFile.open(QIODevice::ReadOnly))
-	{
-		qDebug() << "Couldn't open" << path_to_file;
-		return 33;
-	}
-
-	QByteArray crawlerConfigData=crawlerConfigFile.readAll();
-	crawlerConfigFile.close();
-
-	QJsonParseError err;
-	QJsonDocument crawlerConfigJsonDoc = QJsonDocument::fromJson(crawlerConfigData, &err);
-
-	if (err.error != QJsonParseError::NoError)
-	{
-		qDebug() << "Unable to parse" << path_to_file;
-		qDebug() << err.errorString();
-		return 44;
-	}
-
-	if(!crawlerConfigJsonDoc.isObject())
-	{
-		qDebug() << "Unable to get valid JSON object from" << path_to_file;
-		return 55;
-	}
-
-	QJsonObject crawlerConfigJsonObject = crawlerConfigJsonDoc.object();
-
-	if(crawlerConfigJsonObject.value("http_user_agent").isString())
-	{
-		this->setHttpUserAgent(crawlerConfigJsonObject.value("http_user_agent").toString());
-	}
-
-	if(crawlerConfigJsonObject.value("indexer_database_directory").isString())
-	{
-		this->setDatabaseDirectory(crawlerConfigJsonObject.value("indexer_database_directory").toString());
-	}
-
-	QSize crawlerWindowSize(0, 0);
-	if(crawlerConfigJsonObject.value("window_width").isDouble())
-	{
-		crawlerWindowSize.setWidth(crawlerConfigJsonObject.value("window_width").toDouble());
-	}
-	if(crawlerConfigJsonObject.value("window_height").isDouble())
-	{
-		crawlerWindowSize.setHeight(crawlerConfigJsonObject.value("window_height").toDouble());
-	}
-	this->setWindowSize(crawlerWindowSize);
-
-	if(crawlerConfigJsonObject.value("allowed_url_schemes").isArray())
-	{
-		const QJsonArray &allowedURLSchemes=crawlerConfigJsonObject.value("allowed_url_schemes").toArray();
-		for (const QJsonValue &allowedURLScheme : allowedURLSchemes)
-		{
-			this->addAllowedURLScheme(allowedURLScheme.toString());
-		}
-	}
-
-	if(crawlerConfigJsonObject.value("start_urls").isArray())
-	{
-		const QJsonArray &startURLs=crawlerConfigJsonObject.value("start_urls").toArray();
-		for (const QJsonValue &startURL : startURLs)
-		{
-			this->addURLToQueue(startURL.toString());
-		}
-	}
-
-	if(crawlerConfigJsonObject.value("crawling_zones").isArray())
-	{
-		const QJsonArray &crawlingZones=crawlerConfigJsonObject.value("crawling_zones").toArray();
-		for (const QJsonValue &crawlingZone : crawlingZones)
-		{
-			this->addCrawlingZone(crawlingZone.toString());
-		}
-	}
-
-	if(crawlerConfigJsonObject.value("black_list").isArray())
-	{
-		const QJsonArray &blHosts=crawlerConfigJsonObject.value("black_list").toArray();
-		for (const QJsonValue &blHost : blHosts)
-		{
-			this->addHostnameToBlacklist(blHost.toString());
-		}
-	}
-
-	return 0;
-}
-
-void Crawler::setPathToFirefoxProfile(const QString &path)
-{
-	mPathToFireFoxProfile=path;
-}
-
-void Crawler::setHttpUserAgent(const QString &user_agent)
-{
-	mWebPageProcessor->setHttpUserAgent(user_agent);
-}
-
-void Crawler::setWindowSize(const QSize &window_size)
-{
-	mWebPageProcessor->setWindowSize(window_size);
-}
-
-void Crawler::setDatabaseDirectory(const QString &database_directory)
-{
-	mIndexer->setDatabaseDirectory(database_directory);
-}
-
-QString Crawler::getDatabaseDirectory() const
-{
-	return mIndexer->getDatabaseDirectory();
-}
-
-void Crawler::addAllowedURLScheme(const QString &scheme)
-{
-	if(!scheme.isEmpty())
-	{
-		mAllowedURLSchemes.append(scheme);
-	}
-}
-
 void Crawler::loadNextPage()
 {
 	qDebug("Crawler::loadNextPage");
-	if (mURLListActive->isEmpty())
+	if(mURLListActive->isEmpty())
 	{
 		qSwap(mURLListActive, mURLListQueued);
-		if (mURLListActive->isEmpty())
+		if(mURLListActive->isEmpty())
 		{
 			emit finished();
 			return;
@@ -224,7 +85,7 @@ void Crawler::onPageProcessingFinished()
 
 #ifndef NDEBUG
 	QFile pageHTMLFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".html"));
-	if (pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	if(pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
 		pageHTMLFile.write(pageContentHtml.toUtf8());
 		pageHTMLFile.close();
@@ -235,7 +96,7 @@ void Crawler::onPageProcessingFinished()
 	}
 
 	QFile pageTXTFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".txt"));
-	if (pageTXTFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	if(pageTXTFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
 		pageTXTFile.write(pageContentText.toUtf8());
 		pageTXTFile.close();
@@ -246,7 +107,7 @@ void Crawler::onPageProcessingFinished()
 	}
 
 	QFile pageLinksFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_links.txt"));
-	if (pageLinksFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	if(pageLinksFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
 		for(const QUrl &link : pageLinksList)
 		{
@@ -260,7 +121,7 @@ void Crawler::onPageProcessingFinished()
 	}
 
 	QFile pageWordsFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_words.txt"));
-	if (pageWordsFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	if(pageWordsFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
 		for(const QString &word : pageMetadata.words.keys())
 		{
@@ -288,7 +149,7 @@ void Crawler::onPageProcessingFinished()
 void Crawler::addURLsToQueue(const QList<QUrl> &urls)
 {
 	qDebug("Crawler::addURLsToQueue");
-	for (const QUrl &url : urls)
+	for(const QUrl &url : urls)
 	{
 		addURLToQueue(url);
 	}
@@ -302,22 +163,22 @@ void Crawler::addURLToQueue(const QUrl &url)
 	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;
-	if (sHostnameBlacklist.contains(urlAdjusted.host()))
+	if(gSettings->blacklistedHosts().contains(urlAdjusted.host()))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
 	}
-	else if (mVisitedURLsHashes.contains(urlHash))
+	else if(mVisitedURLsHashes.contains(urlHash))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping visited page";
 	}
 	bool urlAllowedByZonePrefix=1;
-	const QStringList* const zonePrefixList=mCrawlingZones.value(urlAdjusted.host(), nullptr);
-	if(nullptr!=zonePrefixList)
+	if(gSettings->crawlingZones().contains(urlAdjusted.host()))
 	{
 		urlAllowedByZonePrefix=0;
-		for(const QString &zonePrefix : *zonePrefixList)
+		const QStringList &zonePrefixList=gSettings->crawlingZones()[urlAdjusted.host()];
+		for(const QString &zonePrefix : zonePrefixList)
 		{
 			if(!zonePrefix.isEmpty())
 			{
@@ -334,9 +195,9 @@ void Crawler::addURLToQueue(const QUrl &url)
 		skipThisURL=true;
 		qDebug() << "Skipping page outside crawling zone";
 	}
-	if(!mAllowedURLSchemes.isEmpty())
+	if(!gSettings->allowedUrlSchemes().isEmpty())
 	{
-		if(!mAllowedURLSchemes.contains(urlAdjusted.scheme()))
+		if(!gSettings->allowedUrlSchemes().contains(urlAdjusted.scheme()))
 		{
 			skipThisURL=true;
 			qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
@@ -351,45 +212,6 @@ void Crawler::addURLToQueue(const QUrl &url)
 	{
 		mURLListQueued->append(urlAdjusted);
 		qDebug() << "Adding URL to the processing list";
-	}
-}
-
-void Crawler::addHostnameToBlacklist(const QString &hostname)
-{
-	qDebug("Crawler::addHostnameToBlacklist");
-	if (!sHostnameBlacklist.contains(hostname))
-	{
-		sHostnameBlacklist.insert(hostname);
-		qDebug() << "Host name has been added to the blacklist:" << hostname;
-	}
-}
-
-void Crawler::addCrawlingZone(const QUrl &zone_prefix)
-{
-	qDebug("Crawler::addCrawlingZone");
-	if(zone_prefix.scheme().isEmpty())
-	{
-		return;
-	}
-	if(zone_prefix.host().isEmpty())
-	{
-		return;
-	}
-	QString zonePrefixString=zone_prefix.toString();
-	qDebug() << zonePrefixString;
-	QStringList *zonePrefixList=mCrawlingZones.value(zone_prefix.host(), nullptr);
-	if(nullptr!=zonePrefixList)
-	{
-		if(!zonePrefixList->contains(zonePrefixString))
-		{
-			zonePrefixList->append(zonePrefixString);
-		}
-	}
-	else
-	{
-		zonePrefixList=new QStringList;
-		zonePrefixList->append(zonePrefixString);
-		mCrawlingZones.insert(zone_prefix.host(), zonePrefixList);
 	}
 }
 
@@ -408,7 +230,7 @@ void Crawler::loadIndex()
 void Crawler::start()
 {
 	qDebug("Crawler::start");
-	mWebPageProcessor->loadCookiesFromFirefoxProfile(mPathToFireFoxProfile);
+	mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
 	if(!mLoadingIntervalTimer->isActive())
 	{
 		mLoadingIntervalTimer->setInterval(mRNG->bounded(PAGE_LOADING_INTERVAL_MIN, PAGE_LOADING_INTERVAL_MAX));

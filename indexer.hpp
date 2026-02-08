@@ -33,7 +33,7 @@ public:
 	~Indexer();
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
-	QString getDatabaseDirectory() const;
+	const QString &getDatabaseDirectory() const;
 	void save(const QString &database_directory);
 	void load(const QString &database_directory);
 	void merge(const Indexer &other);
