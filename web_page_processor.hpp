@@ -14,13 +14,14 @@ class WebPageProcessor : public QObject
 	QWebEnginePage *mWebPage;
 	QWebEngineProfile *mProfile;
 	QWebEngineView *mWebViewWidget;
-	QTimer *mJSCooldownTimer;
+	QTimer *mJSCompletionTimer;
 	QString mPageContentHTML;
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;
 	void createNewWebPage();
 private slots:
 	void waitForJSToFinish(bool ok);
+	void scrollPageDownWithJS();
 	void extractPageContentTEXT();
 	void extractPageContentHTML();
 	void extractPageLinks();
@@ -28,7 +29,6 @@ public:
 	WebPageProcessor(QObject *parent=nullptr);
 	void setHttpUserAgent(const QString &user_agent);
 	void setWindowSize(const QSize &window_size);
-	void setJSCooldownInterval(int64_t interval_ms);
 	void loadCookiesFromFirefoxProfile(const QString &path_to_file);
 	void loadCookiesFromFirefoxDB(const QString &path_to_file);
 	void loadPage(const QUrl &url);

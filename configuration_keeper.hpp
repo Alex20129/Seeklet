@@ -14,6 +14,7 @@ class ConfigurationKeeper : public QObject
 	QString mDatabaseDirectory;
 	QString mFireFoxProfileDirectory;
 	QSize mCrawlerWindowSize;
+	int mJsCompletionTimeout;
 	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
 	QSet<QString> mBlacklistedHosts;
@@ -35,6 +36,9 @@ public:
 	void setCrawlerWindowHeight(int crawler_window_height);
 	void setCrawlerWindowSize(const QSize &crawler_window_size);
 	const QSize &crawlerWindowSize() const;
+
+	void setJsCompletionTimeout(int js_completion_timeout);
+	int jsCompletionTimeout() const;
 
 	void addAllowedUrlScheme(const QString &allowed_url_scheme);
 	void removeAllowedUrlScheme(const QString &allowed_url_scheme);

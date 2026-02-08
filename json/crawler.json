@@ -4,6 +4,7 @@
 	"database_directory":"./indexer_database",
 	"crawler_window_width":0,
 	"crawler_window_height":0,
+	"js_completion_timeout":2000,
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/tagged/linux",

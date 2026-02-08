@@ -17,6 +17,7 @@ int main(int argc, char **argv)
 	QObject::connect(myCrawler, &Crawler::finished, &fossenApp, &QCoreApplication::quit);
 
 	QTimer::singleShot(0, myCrawler, &Crawler::loadIndex);
+	//QTimer::singleShot(0, myCrawler, &Crawler::searchTest);
 	QTimer::singleShot(0, myCrawler, &Crawler::start);
 
 	return(fossenApp.exec());

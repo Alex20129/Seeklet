@@ -17,26 +17,33 @@
 
 void WebPageProcessor::createNewWebPage()
 {
-	if(mWebPage)
+	QWebEnginePage *oldWebPage=mWebPage;
+	QWebEnginePage *newWebPage=new QWebEnginePage(mProfile, this);
+	mWebViewWidget->setPage(newWebPage);
+	connect(newWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
+	mWebPage=newWebPage;
+	if(oldWebPage)
 	{
-		disconnect(mWebPage, nullptr, nullptr, nullptr);
-		mWebPage->deleteLater();
+		disconnect(oldWebPage, nullptr, nullptr, nullptr);
+		oldWebPage->deleteLater();
 	}
-	mWebPage=new QWebEnginePage(mProfile, this);
-	mWebViewWidget->setPage(mWebPage);
-	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
 }
 
 void WebPageProcessor::waitForJSToFinish(bool ok)
 {
 	if(ok)
 	{
-		mJSCooldownTimer->start();
+		mJSCompletionTimer->start(gSettings->jsCompletionTimeout());
 	}
 	else
 	{
 		emit pageLoadingFail();
 	}
+}
+
+void WebPageProcessor::scrollPageDownWithJS()
+{
+	mWebPage->runJavaScript("window.scroll(window.scrollMaxX/2,window.scrollMaxY)");
 }
 
 void WebPageProcessor::extractPageContentTEXT()
@@ -123,11 +130,11 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
 	mWebPage=nullptr;
 	createNewWebPage();
-	mJSCooldownTimer=new QTimer(this);
-	mJSCooldownTimer->setSingleShot(1);
-	mJSCooldownTimer->setInterval(3000);
-	connect(mJSCooldownTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
-	connect(mJSCooldownTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
+	mJSCompletionTimer=new QTimer(this);
+	mJSCompletionTimer->setSingleShot(1);
+	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::scrollPageDownWithJS);
+	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
+	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
 }
 
@@ -150,11 +157,6 @@ void WebPageProcessor::setWindowSize(const QSize &window_size)
 	{
 		mWebViewWidget->resize(mWebViewWidget->screen()->size());
 	}
-}
-
-void WebPageProcessor::setJSCooldownInterval(int64_t interval_ms)
-{
-	mJSCooldownTimer->setInterval(interval_ms);
 }
 
 void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file)

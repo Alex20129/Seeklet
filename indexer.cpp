@@ -150,10 +150,10 @@ void Indexer::save(const QString &database_directory)
 		QHash<quint64, PageMetadata *>::const_iterator cHashIt;
 		for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
 		{
-			const PageMetadata *pm = cHashIt.value();
-			if(nullptr!=pm)
+			const PageMetadata *pageMDPtr = cHashIt.value();
+			if(nullptr!=pageMDPtr)
 			{
-				pm->writeToStream(mdFileStream);
+				pageMDPtr->writeToStream(mdFileStream);
 			}
 		}
 		mdFile.close();
@@ -260,6 +260,23 @@ void Indexer::load(const QString &database_directory)
 	{
 		qWarning() << "Failed to open" << mdFilePath << "for reading";
 	}
+#ifndef NDEBUG
+	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
+	for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
+	{
+		const PageMetadata *pageMDPtr = cHashIt.value();
+		if(nullptr!=pageMDPtr)
+		{
+			qDebug() << pageMDPtr->title;
+			qDebug() << pageMDPtr->url;
+			qDebug() << pageMDPtr->timeStamp.toString();
+			qDebug() << pageMDPtr->urlHash;
+			qDebug() << pageMDPtr->contentHash;
+			qDebug() << pageMDPtr->words.keys();
+			qDebug() << "====";
+		}
+	}
+#endif
 }
 
 void Indexer::merge(const Indexer &other)
@@ -308,7 +325,7 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 		return searchResults;
 	}
 	QString smallestSetKey;
-	qsizetype smallestSetSize = SIZE_MAX;
+	qsizetype smallestSetSize = LONG_LONG_MAX;
 	for(const QString &word : words)
 	{
 		if(!mIndexTableOfContents.contains(word))

@@ -64,6 +64,16 @@ const QSize &ConfigurationKeeper::crawlerWindowSize() const
 	return mCrawlerWindowSize;
 }
 
+void ConfigurationKeeper::setJsCompletionTimeout(int js_completion_timeout)
+{
+	mJsCompletionTimeout=js_completion_timeout;
+}
+
+int ConfigurationKeeper::jsCompletionTimeout() const
+{
+	return mJsCompletionTimeout;
+}
+
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
 {
 	if(allowed_url_scheme.isEmpty())
@@ -213,6 +223,10 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	if(configJsonObject.value("crawler_window_height").isDouble())
 	{
 		this->setCrawlerWindowHeight(configJsonObject.value("crawler_window_height").toDouble());
+	}
+	if(configJsonObject.value("js_completion_timeout").isDouble())
+	{
+		this->setJsCompletionTimeout(configJsonObject.value("js_completion_timeout").toDouble());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

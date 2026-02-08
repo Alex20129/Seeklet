@@ -20,7 +20,6 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 	connect(mLoadingIntervalTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 	connect(this, &Crawler::needToIndexNewPage, mIndexer, &Indexer::addPage);
-	addURLsToQueue(gSettings->startUrls());
 }
 
 Crawler::~Crawler()
@@ -84,55 +83,55 @@ void Crawler::onPageProcessingFinished()
 	addURLsToQueue(pageLinksList);
 
 #ifndef NDEBUG
-	QFile pageHTMLFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".html"));
-	if(pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		pageHTMLFile.write(pageContentHtml.toUtf8());
-		pageHTMLFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open page.html";
-	}
+	// QFile pageHTMLFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".html"));
+	// if(pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	// {
+	// 	pageHTMLFile.write(pageContentHtml.toUtf8());
+	// 	pageHTMLFile.close();
+	// }
+	// else
+	// {
+	// 	qWarning() << "Failed to open page.html";
+	// }
 
-	QFile pageTXTFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".txt"));
-	if(pageTXTFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		pageTXTFile.write(pageContentText.toUtf8());
-		pageTXTFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open page.txt";
-	}
+	// QFile pageTXTFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".txt"));
+	// if(pageTXTFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	// {
+	// 	pageTXTFile.write(pageContentText.toUtf8());
+	// 	pageTXTFile.close();
+	// }
+	// else
+	// {
+	// 	qWarning() << "Failed to open page.txt";
+	// }
 
-	QFile pageLinksFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_links.txt"));
-	if(pageLinksFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		for(const QUrl &link : pageLinksList)
-		{
-			pageLinksFile.write(link.toString().toUtf8()+QByteArray("\n"));
-		}
-		pageLinksFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open page_links.txt";
-	}
+	// QFile pageLinksFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_links.txt"));
+	// if(pageLinksFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	// {
+	// 	for(const QUrl &link : pageLinksList)
+	// 	{
+	// 		pageLinksFile.write(link.toString().toUtf8()+QByteArray("\n"));
+	// 	}
+	// 	pageLinksFile.close();
+	// }
+	// else
+	// {
+	// 	qWarning() << "Failed to open page_links.txt";
+	// }
 
-	QFile pageWordsFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_words.txt"));
-	if(pageWordsFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		for(const QString &word : pageMetadata.words.keys())
-		{
-			pageWordsFile.write(word.toUtf8()+" "+QString::number(pageMetadata.words[word]).toUtf8()+QByteArray("\n"));
-		}
-		pageWordsFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open page_words.txt";
-	}
+	// QFile pageWordsFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_words.txt"));
+	// if(pageWordsFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	// {
+	// 	for(const QString &word : pageMetadata.words.keys())
+	// 	{
+	// 		pageWordsFile.write(word.toUtf8()+" "+QString::number(pageMetadata.words[word]).toUtf8()+QByteArray("\n"));
+	// 	}
+	// 	pageWordsFile.close();
+	// }
+	// else
+	// {
+	// 	qWarning() << "Failed to open page_words.txt";
+	// }
 
 	if(++visited_n>=100)
 	{
@@ -230,6 +229,7 @@ void Crawler::loadIndex()
 void Crawler::start()
 {
 	qDebug("Crawler::start");
+	addURLsToQueue(gSettings->startUrls());
 	mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
 	if(!mLoadingIntervalTimer->isActive())
 	{
@@ -254,12 +254,11 @@ void Crawler::stop()
 		const PageMetadata *pageMDPtr=mIndexer->getPageMetadataByUrlHash(*visitedURLsHashesIt);
 		if(nullptr!=pageMDPtr)
 		{
-			qDebug() << pageMDPtr->url;
 			qDebug() << pageMDPtr->title;
+			qDebug() << pageMDPtr->url;
 			qDebug() << pageMDPtr->timeStamp.toString();
 			qDebug() << pageMDPtr->urlHash;
 			qDebug() << pageMDPtr->contentHash;
-			qDebug() << pageMDPtr->words.keys();
 			qDebug() << "====";
 		}
 	}
@@ -274,16 +273,29 @@ void Crawler::searchTest()
 {
 	qDebug("Crawler::searchTest");
 	QStringList words;
-	words.append("meaning of life");
+	words.append("business");
+	words.append("suit");
 	const QVector<const PageMetadata *> searchResults=mIndexer->searchPagesByWords(words);
-	for(const PageMetadata *page : searchResults)
+	QFile searchResultFile(QString("search_result.html"));
+	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
-		qDebug() << page->url;
-		qDebug() << page->title;
-		qDebug() << page->timeStamp.toString();
-		qDebug() << page->urlHash;
-		qDebug() << page->contentHash;
-		qDebug() << "====";
+		searchResultFile.write("<html>\n");
+		for(const PageMetadata *pageMDPtr : searchResults)
+		{
+			searchResultFile.write("<a href=\"");
+			searchResultFile.write(pageMDPtr->url.toStdString().data());
+			searchResultFile.write("\">");
+			searchResultFile.write(pageMDPtr->title.toStdString().data());
+			searchResultFile.write("</a><br>\n");
+			// searchResultFile.write(pageMDPtr->timeStamp.toString().toStdString().data());
+			// searchResultFile.write("\n");
+			// searchResultFile.write(QByteArray::number(pageMDPtr->urlHash).toStdString().data());
+			// searchResultFile.write("\n");
+			// searchResultFile.write(QByteArray::number(pageMDPtr->contentHash).toStdString().data());
+			// searchResultFile.write("\n");
+		}
+		searchResultFile.write("</html>\n");
+		searchResultFile.close();
 	}
 }
 #endif
