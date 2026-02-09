@@ -12,7 +12,7 @@
 #include <QtSql/QSqlError>
 #include <htmlcxx/html/ParserDom.h>
 #include <htmlcxx/html/Uri.h>
-#include "configuration_keeper.hpp"
+#include "main.hpp"
 #include "web_page_processor.hpp"
 
 void WebPageProcessor::createNewWebPage()
@@ -39,11 +39,6 @@ void WebPageProcessor::waitForJSToFinish(bool ok)
 	{
 		emit pageLoadingFail();
 	}
-}
-
-void WebPageProcessor::scrollPageDownWithJS()
-{
-	mWebPage->runJavaScript("window.scroll(window.scrollMaxX/2,window.scrollMaxY)");
 }
 
 void WebPageProcessor::extractPageContentTEXT()
@@ -121,8 +116,8 @@ void WebPageProcessor::extractPageLinks()
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
 	mWebViewWidget=new QWebEngineView();
-	mWebViewWidget->setWindowFlags(Qt::WindowType::FramelessWindowHint);
-	mWebViewWidget->setAttribute(Qt::WA_DontShowOnScreen);
+	mWebViewWidget->setWindowFlags(Qt::WindowType::Window | Qt::WindowType::BypassWindowManagerHint | Qt::WindowType::FramelessWindowHint);
+	mWebViewWidget->setAttribute(Qt::WidgetAttribute::WA_DontShowOnScreen);
 	setWindowSize(gSettings->crawlerWindowSize());
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
@@ -132,7 +127,6 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	createNewWebPage();
 	mJSCompletionTimer=new QTimer(this);
 	mJSCompletionTimer->setSingleShot(1);
-	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::scrollPageDownWithJS);
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);

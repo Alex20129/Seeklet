@@ -4,10 +4,9 @@
 #include <QJsonArray>
 #include "configuration_keeper.hpp"
 
-ConfigurationKeeper *gSettings=nullptr;
-
 ConfigurationKeeper::ConfigurationKeeper(QObject *parent) : QObject(parent)
 {
+	uint64_t WIP; // TODO: default settings
 }
 
 ConfigurationKeeper::~ConfigurationKeeper()
@@ -284,6 +283,9 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 
 void ConfigurationKeeper::saveSettingsToJsonFile(const QString &path_to_file) const
 {
-	// WIP
-	// TODO: save as JSON
+	uint64_t WIP; // TODO: save as JSON
+	if(path_to_file.isEmpty())
+	{
+		return;
+	}
 }

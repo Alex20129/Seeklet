@@ -21,7 +21,6 @@ class WebPageProcessor : public QObject
 	void createNewWebPage();
 private slots:
 	void waitForJSToFinish(bool ok);
-	void scrollPageDownWithJS();
 	void extractPageContentTEXT();
 	void extractPageContentHTML();
 	void extractPageLinks();

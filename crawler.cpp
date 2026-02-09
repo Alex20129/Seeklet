@@ -3,7 +3,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
-#include "configuration_keeper.hpp"
+#include "main.hpp"
 #include "crawler.hpp"
 #include "util.hpp"
 
@@ -15,11 +15,9 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mRNG=new QRandomGenerator(rngSeed);
 	mLoadingIntervalTimer=new QTimer(this);
 	mWebPageProcessor=new WebPageProcessor(this);
-	mIndexer=new Indexer(this);
 	mLoadingIntervalTimer->setSingleShot(1);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 	connect(mLoadingIntervalTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
-	connect(this, &Crawler::needToIndexNewPage, mIndexer, &Indexer::addPage);
 }
 
 Crawler::~Crawler()
@@ -214,18 +212,6 @@ void Crawler::addURLToQueue(const QUrl &url)
 	}
 }
 
-void Crawler::saveIndex()
-{
-	qDebug("Crawler::saveIndex");
-	mIndexer->save(QStringLiteral(""));
-}
-
-void Crawler::loadIndex()
-{
-	qDebug("Crawler::loadIndex");
-	mIndexer->load(QStringLiteral(""));
-}
-
 void Crawler::start()
 {
 	qDebug("Crawler::start");
@@ -243,59 +229,7 @@ void Crawler::stop()
 {
 	qDebug("Crawler::stop");
 	mLoadingIntervalTimer->stop();
-#ifndef NDEBUG
-	qDebug() << "unvisited pages:";
-	qDebug() << *mURLListActive;
-	qDebug() << *mURLListQueued;
-	qDebug() << "visited pages:";
-	QSet<uint64_t>::const_iterator visitedURLsHashesIt;
-	for(visitedURLsHashesIt=mVisitedURLsHashes.constBegin(); visitedURLsHashesIt!=mVisitedURLsHashes.constEnd(); visitedURLsHashesIt++)
-	{
-		const PageMetadata *pageMDPtr=mIndexer->getPageMetadataByUrlHash(*visitedURLsHashesIt);
-		if(nullptr!=pageMDPtr)
-		{
-			qDebug() << pageMDPtr->title;
-			qDebug() << pageMDPtr->url;
-			qDebug() << pageMDPtr->timeStamp.toString();
-			qDebug() << pageMDPtr->urlHash;
-			qDebug() << pageMDPtr->contentHash;
-			qDebug() << "====";
-		}
-	}
-#endif
 	mURLListActive->clear();
 	mURLListQueued->clear();
 	emit finished();
 }
-
-#ifndef NDEBUG
-void Crawler::searchTest()
-{
-	qDebug("Crawler::searchTest");
-	QStringList words;
-	words.append("business");
-	words.append("suit");
-	const QVector<const PageMetadata *> searchResults=mIndexer->searchPagesByWords(words);
-	QFile searchResultFile(QString("search_result.html"));
-	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		searchResultFile.write("<html>\n");
-		for(const PageMetadata *pageMDPtr : searchResults)
-		{
-			searchResultFile.write("<a href=\"");
-			searchResultFile.write(pageMDPtr->url.toStdString().data());
-			searchResultFile.write("\">");
-			searchResultFile.write(pageMDPtr->title.toStdString().data());
-			searchResultFile.write("</a><br>\n");
-			// searchResultFile.write(pageMDPtr->timeStamp.toString().toStdString().data());
-			// searchResultFile.write("\n");
-			// searchResultFile.write(QByteArray::number(pageMDPtr->urlHash).toStdString().data());
-			// searchResultFile.write("\n");
-			// searchResultFile.write(QByteArray::number(pageMDPtr->contentHash).toStdString().data());
-			// searchResultFile.write("\n");
-		}
-		searchResultFile.write("</html>\n");
-		searchResultFile.close();
-	}
-}
-#endif

@@ -1,7 +1,9 @@
 #include <QApplication>
 #include <QTimer>
-#include "configuration_keeper.hpp"
+#include "main.hpp"
 #include "crawler.hpp"
+
+ConfigurationKeeper *gSettings;
 
 int main(int argc, char **argv)
 {
@@ -11,13 +13,15 @@ int main(int argc, char **argv)
 	QApplication fossenApp(argc, argv);
 
 	Crawler *myCrawler=new Crawler;
+	Indexer *myIndexer=new Indexer;
 
-	QObject::connect(myCrawler, &Crawler::finished, myCrawler, &Crawler::saveIndex);
-	QObject::connect(myCrawler, &Crawler::finished, myCrawler, &Crawler::searchTest);
+	QObject::connect(myCrawler, &Crawler::needToIndexNewPage, myIndexer, &Indexer::addPage);
+	QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::save);
+	//QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::searchTest);
 	QObject::connect(myCrawler, &Crawler::finished, &fossenApp, &QCoreApplication::quit);
 
-	QTimer::singleShot(0, myCrawler, &Crawler::loadIndex);
-	//QTimer::singleShot(0, myCrawler, &Crawler::searchTest);
+	QTimer::singleShot(0, myIndexer, &Indexer::load);
+	//QTimer::singleShot(0, myIndexer, &Indexer::searchTest);
 	QTimer::singleShot(0, myCrawler, &Crawler::start);
 
 	return(fossenApp.exec());

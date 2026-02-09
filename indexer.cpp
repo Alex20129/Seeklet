@@ -1,5 +1,5 @@
 #include <QDir>
-#include "configuration_keeper.hpp"
+#include "main.hpp"
 #include "indexer.hpp"
 
 PageMetadata::PageMetadata()
@@ -93,190 +93,6 @@ void Indexer::setDatabaseDirectory(const QString &database_directory)
 			}
 		}
 	}
-}
-
-const QString &Indexer::getDatabaseDirectory() const
-{
-	return mDatabaseDirectory;
-}
-
-void Indexer::save(const QString &database_directory)
-{
-	qDebug("Indexer::save");
-	if(!database_directory.isEmpty())
-	{
-		setDatabaseDirectory(database_directory);
-	}
-	if(mDatabaseDirectory.isEmpty())
-	{
-		return;
-	}
-	QDir dbDir(mDatabaseDirectory);
-	if(!dbDir.exists())
-	{
-		qWarning() << "Directory does not exist, cannot save database to:" << mDatabaseDirectory;
-		return;
-	}
-
-	quint64 dataStreamVersion=QDataStream::Qt_6_0;
-
-	QString tocFilePath = dbDir.filePath("index_toc.dat");
-	QString mdFilePath = dbDir.filePath("index_md.dat");
-
-	QFile tocFile(tocFilePath);
-	if(tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		QDataStream tocFileStream(&tocFile);
-		tocFileStream.setVersion(QDataStream::Qt_6_0);
-		tocFileStream << dataStreamVersion;
-		tocFileStream << mIndexTableOfContents;
-		tocFile.close();
-		qDebug() << "Table of contents has been saved successfully.";
-		qDebug() << mIndexTableOfContents.size() << "entries saved.";
-	}
-	else
-	{
-		qWarning() << "Failed to open" << tocFilePath << "for writing";
-	}
-
-	QFile mdFile(mdFilePath);
-	if(mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		QDataStream mdFileStream(&mdFile);
-		mdFileStream.setVersion(QDataStream::Qt_6_0);
-		mdFileStream << dataStreamVersion;
-		quint64 numOfPages = mIndexByContentHash.size();
-		mdFileStream << numOfPages;
-		QHash<quint64, PageMetadata *>::const_iterator cHashIt;
-		for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
-		{
-			const PageMetadata *pageMDPtr = cHashIt.value();
-			if(nullptr!=pageMDPtr)
-			{
-				pageMDPtr->writeToStream(mdFileStream);
-			}
-		}
-		mdFile.close();
-		qDebug() << "Metadata has been saved successfully.";
-		qDebug() << mIndexByContentHash.size() << "entries saved.";
-	}
-	else
-	{
-		qWarning() << "Failed to open" << mdFilePath << "for writing";
-	}
-}
-
-void Indexer::load(const QString &database_directory)
-{
-	qDebug("Indexer::load");
-	if(!database_directory.isEmpty())
-	{
-		setDatabaseDirectory(database_directory);
-	}
-	if(mDatabaseDirectory.isEmpty())
-	{
-		return;
-	}
-	QDir dbDir(mDatabaseDirectory);
-	if(!dbDir.exists())
-	{
-		qWarning() << "Directory does not exist, cannot load database from:" << mDatabaseDirectory;
-		return;
-	}
-
-	quint64 dataStreamVersion, numOfPages;
-
-	QString tocFilePath = dbDir.filePath("index_toc.dat");
-	QString mdFilePath = dbDir.filePath("index_md.dat");
-
-	this->clear();
-
-	QFile tocFile(tocFilePath);
-	if(tocFile.open(QIODevice::ReadOnly))
-	{
-		QDataStream tocFileStream(&tocFile);
-		tocFileStream.setVersion(QDataStream::Qt_6_0);
-		tocFileStream >> dataStreamVersion;
-		if(dataStreamVersion!=(quint64)(QDataStream::Qt_6_0))
-		{
-			qWarning() << "Unknown file version. Cannot load data from:" << tocFilePath;
-		}
-		else
-		{
-			tocFileStream >> mIndexTableOfContents;
-			qDebug() << "Table of contents has been loaded successfully:" << mIndexTableOfContents.size() << "new records.";
-		}
-		tocFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open" << tocFilePath << "for reading";
-	}
-
-	QFile mdFile(mdFilePath);
-	if(mdFile.open(QIODevice::ReadOnly))
-	{
-		QDataStream mdFileStream(&mdFile);
-		mdFileStream.setVersion(QDataStream::Qt_6_0);
-		mdFileStream >> dataStreamVersion;
-		if(dataStreamVersion!=(quint64)(QDataStream::Qt_6_0))
-		{
-			qWarning() << "Unknown file version. Cannot load data from:" << mdFilePath;
-		}
-		else
-		{
-			mdFileStream >> numOfPages;
-			for(quint64 page=0; page<numOfPages; page++)
-			{
-				PageMetadata *newPageMetadata=new PageMetadata;
-				newPageMetadata->readFromStream(mdFileStream);
-				if(mIndexByUrlHash.contains(newPageMetadata->urlHash))
-				{
-					delete newPageMetadata;
-					continue;
-				}
-				if(mIndexByContentHash.contains(newPageMetadata->contentHash))
-				{
-					delete newPageMetadata;
-					continue;
-				}
-				mIndexByUrlHash.insert(newPageMetadata->urlHash, newPageMetadata);
-				mIndexByContentHash.insert(newPageMetadata->contentHash, newPageMetadata);
-			}
-			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
-			{
-				qDebug() << "Metadata has been loaded successfully:" << mIndexByContentHash.size() << "new records.";
-			}
-			else
-			{
-				qWarning() << "Warning:" << numOfPages << "metadata records was expected, but only" <<
-				mIndexByContentHash.size() << "has been loaded.";
-				qWarning()<< "Metadata file possibly corrupted:" << mdFilePath;
-			}
-		}
-		mdFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open" << mdFilePath << "for reading";
-	}
-#ifndef NDEBUG
-	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
-	for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
-	{
-		const PageMetadata *pageMDPtr = cHashIt.value();
-		if(nullptr!=pageMDPtr)
-		{
-			qDebug() << pageMDPtr->title;
-			qDebug() << pageMDPtr->url;
-			qDebug() << pageMDPtr->timeStamp.toString();
-			qDebug() << pageMDPtr->urlHash;
-			qDebug() << pageMDPtr->contentHash;
-			qDebug() << pageMDPtr->words.keys();
-			qDebug() << "====";
-		}
-	}
-#endif
 }
 
 void Indexer::merge(const Indexer &other)
@@ -482,3 +298,194 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		mIndexTableOfContents[word].insert(pageMetaDataCopy->contentHash);
 	}
 }
+
+void Indexer::save()
+{
+	qDebug("Indexer::save");
+	if(mDatabaseDirectory.isEmpty())
+	{
+		return;
+	}
+	QDir dbDir(mDatabaseDirectory);
+
+	quint64 dataStreamVersion=QDataStream::Qt_6_0;
+	QString tocFilePath = dbDir.filePath("index_toc.dat");
+	QString mdFilePath = dbDir.filePath("index_md.dat");
+
+	QFile tocFile(tocFilePath);
+	if(tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		QDataStream tocFileStream(&tocFile);
+		tocFileStream.setVersion(QDataStream::Qt_6_0);
+		tocFileStream << dataStreamVersion;
+		tocFileStream << mIndexTableOfContents;
+		tocFile.close();
+		qDebug() << "Table of contents has been saved successfully.";
+		qDebug() << mIndexTableOfContents.size() << "entries saved.";
+	}
+	else
+	{
+		qWarning() << "Failed to open" << tocFilePath << "for writing";
+	}
+
+	QFile mdFile(mdFilePath);
+	if(mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		QDataStream mdFileStream(&mdFile);
+		mdFileStream.setVersion(QDataStream::Qt_6_0);
+		mdFileStream << dataStreamVersion;
+		quint64 numOfPages = mIndexByContentHash.size();
+		mdFileStream << numOfPages;
+		QHash<quint64, PageMetadata *>::const_iterator cHashIt;
+		for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
+		{
+			const PageMetadata *pageMDPtr = cHashIt.value();
+			if(nullptr!=pageMDPtr)
+			{
+				pageMDPtr->writeToStream(mdFileStream);
+			}
+		}
+		mdFile.close();
+		qDebug() << "Metadata has been saved successfully.";
+		qDebug() << mIndexByContentHash.size() << "entries saved.";
+	}
+	else
+	{
+		qWarning() << "Failed to open" << mdFilePath << "for writing";
+	}
+}
+
+void Indexer::load()
+{
+	qDebug("Indexer::load");
+	if(mDatabaseDirectory.isEmpty())
+	{
+		return;
+	}
+	QDir dbDir(mDatabaseDirectory);
+
+	quint64 dataStreamVersion, numOfPages;
+	QString tocFilePath = dbDir.filePath("index_toc.dat");
+	QString mdFilePath = dbDir.filePath("index_md.dat");
+
+	this->clear();
+
+	QFile tocFile(tocFilePath);
+	if(tocFile.open(QIODevice::ReadOnly))
+	{
+		QDataStream tocFileStream(&tocFile);
+		tocFileStream.setVersion(QDataStream::Qt_6_0);
+		tocFileStream >> dataStreamVersion;
+		if(dataStreamVersion!=(quint64)(QDataStream::Qt_6_0))
+		{
+			qWarning() << "Unknown file version. Cannot load data from:" << tocFilePath;
+		}
+		else
+		{
+			tocFileStream >> mIndexTableOfContents;
+			qDebug() << "Table of contents has been loaded successfully:" << mIndexTableOfContents.size() << "new records.";
+		}
+		tocFile.close();
+	}
+	else
+	{
+		qWarning() << "Failed to open" << tocFilePath << "for reading";
+	}
+
+	QFile mdFile(mdFilePath);
+	if(mdFile.open(QIODevice::ReadOnly))
+	{
+		QDataStream mdFileStream(&mdFile);
+		mdFileStream.setVersion(QDataStream::Qt_6_0);
+		mdFileStream >> dataStreamVersion;
+		if(dataStreamVersion!=(quint64)(QDataStream::Qt_6_0))
+		{
+			qWarning() << "Unknown file version. Cannot load data from:" << mdFilePath;
+		}
+		else
+		{
+			mdFileStream >> numOfPages;
+			for(quint64 page=0; page<numOfPages; page++)
+			{
+				PageMetadata *newPageMetadata=new PageMetadata;
+				newPageMetadata->readFromStream(mdFileStream);
+				if(mIndexByUrlHash.contains(newPageMetadata->urlHash))
+				{
+					delete newPageMetadata;
+					continue;
+				}
+				if(mIndexByContentHash.contains(newPageMetadata->contentHash))
+				{
+					delete newPageMetadata;
+					continue;
+				}
+				mIndexByUrlHash.insert(newPageMetadata->urlHash, newPageMetadata);
+				mIndexByContentHash.insert(newPageMetadata->contentHash, newPageMetadata);
+			}
+			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
+			{
+				qDebug() << "Metadata has been loaded successfully:" << mIndexByContentHash.size() << "new records.";
+			}
+			else
+			{
+				qWarning() << "Warning:" << numOfPages << "metadata records was expected, but only" <<
+					mIndexByContentHash.size() << "has been loaded.";
+				qWarning()<< "Metadata file possibly corrupted:" << mdFilePath;
+			}
+		}
+		mdFile.close();
+	}
+	else
+	{
+		qWarning() << "Failed to open" << mdFilePath << "for reading";
+	}
+#ifndef NDEBUG
+	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
+	for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
+	{
+		const PageMetadata *pageMDPtr = cHashIt.value();
+		if(nullptr!=pageMDPtr)
+		{
+			qDebug() << pageMDPtr->title;
+			qDebug() << pageMDPtr->url;
+			qDebug() << pageMDPtr->timeStamp.toString();
+			qDebug() << pageMDPtr->urlHash;
+			qDebug() << pageMDPtr->contentHash;
+			qDebug() << pageMDPtr->words.keys();
+			qDebug() << "====";
+		}
+	}
+#endif
+}
+
+#ifndef NDEBUG
+void Indexer::searchTest()
+{
+	qDebug("Indexer::searchTest");
+	QStringList words;
+	words.append("business");
+	words.append("suit");
+	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(words);
+	QFile searchResultFile(QString("search_result.html"));
+	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		searchResultFile.write("<html>\n");
+		for(const PageMetadata *pageMDPtr : searchResults)
+		{
+			searchResultFile.write("<a href=\"");
+			searchResultFile.write(pageMDPtr->url.toStdString().data());
+			searchResultFile.write("\">");
+			searchResultFile.write(pageMDPtr->title.toStdString().data());
+			searchResultFile.write("</a><br>\n");
+			// searchResultFile.write(pageMDPtr->timeStamp.toString().toStdString().data());
+			// searchResultFile.write("\n");
+			// searchResultFile.write(QByteArray::number(pageMDPtr->urlHash).toStdString().data());
+			// searchResultFile.write("\n");
+			// searchResultFile.write(QByteArray::number(pageMDPtr->contentHash).toStdString().data());
+			// searchResultFile.write("\n");
+		}
+		searchResultFile.write("</html>\n");
+		searchResultFile.close();
+	}
+}
+#endif

@@ -12,7 +12,6 @@ class Crawler : public QObject
 	QRandomGenerator *mRNG;
 	QTimer *mLoadingIntervalTimer;
 	WebPageProcessor *mWebPageProcessor;
-	Indexer *mIndexer;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
 	QSet<uint64_t> mVisitedURLsHashes;
 private slots:
@@ -26,13 +25,8 @@ public:
 	void addURLsToQueue(const QList<QUrl> &urls);
 	void addURLToQueue(const QUrl &url);
 public slots:
-	void saveIndex();
-	void loadIndex();
 	void start();
 	void stop();
-#ifndef NDEBUG
-	void searchTest();
-#endif
 signals:
 	void started();
 	void finished();

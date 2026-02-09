@@ -22,6 +22,7 @@ LINK_LIBRARIES(Qt6::Core Qt6::Network Qt6::Sql Qt6::WebEngineCore Qt6::WebEngine
 LINK_LIBRARIES(jansson htmlcxx)
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
+	main.hpp
 	main.cpp
 	crawler.hpp
 	crawler.cpp

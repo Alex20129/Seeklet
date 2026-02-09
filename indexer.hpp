@@ -33,9 +33,6 @@ public:
 	~Indexer();
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
-	const QString &getDatabaseDirectory() const;
-	void save(const QString &database_directory);
-	void load(const QString &database_directory);
 	void merge(const Indexer &other);
 	const PageMetadata *getPageMetadataByContentHash(uint64_t content_hash) const;
 	const PageMetadata *getPageMetadataByUrlHash(uint64_t url_hash) const;
@@ -47,6 +44,11 @@ public:
 	void sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
+	void save();
+	void load();
+#ifndef NDEBUG
+	void searchTest();
+#endif
 };
 
 #endif // INDEXER_HPP

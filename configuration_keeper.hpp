@@ -60,6 +60,4 @@ public:
 	void saveSettingsToJsonFile(const QString &path_to_file) const;
 };
 
-extern ConfigurationKeeper *gSettings;
-
 #endif // CONFIGURATION_KEEPER_HPP
