@@ -100,24 +100,11 @@ void Indexer::merge(const Indexer &other)
 	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt = other.mIndexByContentHash.constBegin(); cHashIt != other.mIndexByContentHash.constEnd(); cHashIt++)
 	{
-		const quint64 contentHash = cHashIt.key();
-		if(!mIndexByContentHash.contains(contentHash))
+		const PageMetadata *pageMetaDataPtr=cHashIt.value();
+		if(nullptr!=pageMetaDataPtr)
 		{
-			const PageMetadata *pageMetaDataPtr=other.mIndexByContentHash[contentHash];
-			if(nullptr!=pageMetaDataPtr)
-			{
-				PageMetadata *pageMetaDataCopy = new PageMetadata(*pageMetaDataPtr);
-				mIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
-				mIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
-			}
+			addPage(*pageMetaDataPtr);
 		}
-	}
-	QHash<QString, QSet<quint64>>::const_iterator tocIt;
-	for(tocIt = other.mIndexTableOfContents.constBegin(); tocIt != other.mIndexTableOfContents.constEnd(); tocIt++)
-	{
-		const QString &word = tocIt.key();
-		const QSet<quint64> &cHashes = other.mIndexTableOfContents[word];
-		mIndexTableOfContents[word].unite(cHashes);
 	}
 }
 
