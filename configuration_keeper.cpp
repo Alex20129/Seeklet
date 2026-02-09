@@ -65,12 +65,52 @@ const QSize &ConfigurationKeeper::crawlerWindowSize() const
 
 void ConfigurationKeeper::setJsCompletionTimeout(int js_completion_timeout)
 {
+	if(js_completion_timeout<10)
+	{
+		js_completion_timeout=10;
+	}
 	mJsCompletionTimeout=js_completion_timeout;
 }
 
 int ConfigurationKeeper::jsCompletionTimeout() const
 {
 	return mJsCompletionTimeout;
+}
+
+void ConfigurationKeeper::setPageLoadingIntervalMin(int page_loading_interval_min)
+{
+	if(page_loading_interval_min<10)
+	{
+		page_loading_interval_min=10;
+	}
+	mPageLoadingIntervalMin=page_loading_interval_min;
+	if(mPageLoadingIntervalMin>mPageLoadingIntervalMax)
+	{
+		mPageLoadingIntervalMax=page_loading_interval_min;
+	}
+}
+
+int ConfigurationKeeper::pageLoadingIntervalMin() const
+{
+	return mPageLoadingIntervalMin;
+}
+
+void ConfigurationKeeper::setPageLoadingIntervalMax(int page_loading_interval_max)
+{
+	if(page_loading_interval_max<10)
+	{
+		page_loading_interval_max=10;
+	}
+	mPageLoadingIntervalMax=page_loading_interval_max;
+	if(mPageLoadingIntervalMax<mPageLoadingIntervalMin)
+	{
+		mPageLoadingIntervalMin=page_loading_interval_max;
+	}
+}
+
+int ConfigurationKeeper::pageLoadingIntervalMax() const
+{
+	return mPageLoadingIntervalMax;
 }
 
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
@@ -226,6 +266,14 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	if(configJsonObject.value("js_completion_timeout").isDouble())
 	{
 		this->setJsCompletionTimeout(configJsonObject.value("js_completion_timeout").toDouble());
+	}
+	if(configJsonObject.value("page_loading_interval_min").isDouble())
+	{
+		this->setPageLoadingIntervalMin(configJsonObject.value("page_loading_interval_min").toDouble());
+	}
+	if(configJsonObject.value("page_loading_interval_max").isDouble())
+	{
+		this->setPageLoadingIntervalMax(configJsonObject.value("page_loading_interval_max").toDouble());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

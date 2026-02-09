@@ -18,8 +18,6 @@ private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();
 public:
-	static constexpr int PAGE_LOADING_INTERVAL_MIN=1024;
-	static constexpr int PAGE_LOADING_INTERVAL_MAX=4096;
 	Crawler(QObject *parent=nullptr);
 	~Crawler();
 	void addURLsToQueue(const QList<QUrl> &urls);

@@ -131,15 +131,14 @@ void Crawler::onPageProcessingFinished()
 	// 	qWarning() << "Failed to open page_words.txt";
 	// }
 
-	if(++visited_n>=100)
+	if(++visited_n>=200)
 	{
 		stop();
 	}
 	else
 #endif
 	{
-		mLoadingIntervalTimer->setInterval(mRNG->bounded(PAGE_LOADING_INTERVAL_MIN, PAGE_LOADING_INTERVAL_MAX));
-		mLoadingIntervalTimer->start();
+		mLoadingIntervalTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
 	}
 }
 
@@ -219,8 +218,7 @@ void Crawler::start()
 	mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
 	if(!mLoadingIntervalTimer->isActive())
 	{
-		mLoadingIntervalTimer->setInterval(mRNG->bounded(PAGE_LOADING_INTERVAL_MIN, PAGE_LOADING_INTERVAL_MAX));
-		mLoadingIntervalTimer->start();
+		mLoadingIntervalTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
 		emit started();
 	}
 }
@@ -228,8 +226,11 @@ void Crawler::start()
 void Crawler::stop()
 {
 	qDebug("Crawler::stop");
-	mLoadingIntervalTimer->stop();
+	if(mLoadingIntervalTimer->isActive())
+	{
+		mLoadingIntervalTimer->stop();
+		emit finished();
+	}
 	mURLListActive->clear();
 	mURLListQueued->clear();
-	emit finished();
 }

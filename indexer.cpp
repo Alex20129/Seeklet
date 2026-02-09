@@ -232,10 +232,10 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 	return (tfNormalized*idf);
 }
 
-// WIP. Very slow implementation.
-// TODO: need to make it faster
 void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const
 {
+	uint64_t WIP; // TODO: Very slow implementation. Need to make it faster.
+
 	if(pages.isEmpty())
 	{
 		return;
@@ -463,8 +463,10 @@ void Indexer::searchTest()
 {
 	qDebug("Indexer::searchTest");
 	QStringList words;
-	words.append("business");
-	words.append("suit");
+	// words.append("business");
+	// words.append("suit");
+	words.append("office");
+	// words.append("hoodie");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(words);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))

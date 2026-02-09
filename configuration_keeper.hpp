@@ -15,6 +15,8 @@ class ConfigurationKeeper : public QObject
 	QString mFireFoxProfileDirectory;
 	QSize mCrawlerWindowSize;
 	int mJsCompletionTimeout;
+	int mPageLoadingIntervalMin;
+	int mPageLoadingIntervalMax;
 	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
 	QSet<QString> mBlacklistedHosts;
@@ -39,6 +41,12 @@ public:
 
 	void setJsCompletionTimeout(int js_completion_timeout);
 	int jsCompletionTimeout() const;
+
+	void setPageLoadingIntervalMin(int page_loading_interval_min);
+	int pageLoadingIntervalMin() const;
+
+	void setPageLoadingIntervalMax(int page_loading_interval_max);
+	int pageLoadingIntervalMax() const;
 
 	void addAllowedUrlScheme(const QString &allowed_url_scheme);
 	void removeAllowedUrlScheme(const QString &allowed_url_scheme);
