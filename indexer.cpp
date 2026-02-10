@@ -78,8 +78,8 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "title:" << page_md.title;
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
-	qDebug() << "contentHash:" << page_md.contentHash;
-	qDebug() << "urlHash:" << page_md.urlHash;
+	qDebug("contentHash: %llX", page_md.contentHash);
+	qDebug("urlHash: %llX", page_md.urlHash);
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt = page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
@@ -516,6 +516,7 @@ void Indexer::searchTest()
 		searchResultFile.write("<html>\n");
 		for(const PageMetadata *pageMDPtr : searchResults)
 		{
+			printPageMetadata(*pageMDPtr);
 			searchResultFile.write("<a href=\"");
 			searchResultFile.write(pageMDPtr->url.toStdString().data());
 			searchResultFile.write("\">");
