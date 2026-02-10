@@ -72,6 +72,25 @@ Indexer::~Indexer()
 	this->clear();
 }
 
+void Indexer::printPageMetadata(const PageMetadata &page_md)
+{
+	qDebug() << "==[ page metadata ]==";
+	qDebug() << "title:" << page_md.title;
+	qDebug() << "url:" << page_md.url;
+	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
+	qDebug() << "contentHash:" << page_md.contentHash;
+	qDebug() << "urlHash:" << page_md.urlHash;
+	qDebug() << "words:";
+	QHash<quint64, quint64>::const_iterator pageTfIt;
+	for(pageTfIt = page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
+	{
+		quint64 wordHash=pageTfIt.key();
+		quint64 wordTf=pageTfIt.value();
+		const QString &word=mDictionaryLookupTable.value(wordHash);
+		qDebug() << word << wordTf;
+	}
+}
+
 void Indexer::clear()
 {
 	qDeleteAll(mIndexByContentHash);
@@ -475,10 +494,7 @@ void Indexer::load()
 		const PageMetadata *pageMDPtr = cHashIt.value();
 		if(nullptr!=pageMDPtr)
 		{
-			qDebug() << pageMDPtr->title;
-			qDebug() << pageMDPtr->url;
-			qDebug() << pageMDPtr->timeStamp.toString();
-			qDebug() << "====";
+			printPageMetadata(*pageMDPtr);
 		}
 	}
 #endif

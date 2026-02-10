@@ -32,6 +32,9 @@ class Indexer : public QObject
 public:
 	Indexer(QObject *parent = nullptr);
 	~Indexer();
+#ifndef NDEBUG
+	void printPageMetadata(const PageMetadata &page_md);
+#endif
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
 	void merge(const Indexer &other);
