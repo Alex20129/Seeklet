@@ -14,7 +14,7 @@ struct PageMetadata
 	QDateTime timeStamp;
 	QString title;
 	QByteArray url;
-	QMap<QString, quint64> words;
+	QHash<quint64, quint64> wordsAsHashes;
 	PageMetadata();
 	void writeToStream(QDataStream &stream) const;
 	void readFromStream(QDataStream &stream);
@@ -24,6 +24,7 @@ struct PageMetadata
 class Indexer : public QObject
 {
 	Q_OBJECT
+	QHash<quint64, QString> mDictionaryLookupTable;
 	QHash<QString, QSet<quint64>> mIndexTableOfContents;
 	QHash<quint64, PageMetadata *> mIndexByContentHash;
 	QHash<quint64, PageMetadata *> mIndexByUrlHash;
@@ -44,6 +45,7 @@ public:
 	void sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
+	void addWord(const QString &word);
 	void save();
 	void load();
 #ifndef NDEBUG

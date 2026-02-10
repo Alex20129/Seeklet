@@ -28,7 +28,8 @@ public slots:
 signals:
 	void started();
 	void finished();
-	void needToIndexNewPage(PageMetadata page_metadata);
+	void needToAddPage(PageMetadata page_metadata);
+	void needToAddWord(QString word);
 };
 
 #endif // CRAWLER_HPP

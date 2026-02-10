@@ -15,7 +15,8 @@ int main(int argc, char **argv)
 	Crawler *myCrawler=new Crawler;
 	Indexer *myIndexer=new Indexer;
 
-	QObject::connect(myCrawler, &Crawler::needToIndexNewPage, myIndexer, &Indexer::addPage);
+	QObject::connect(myCrawler, &Crawler::needToAddPage, myIndexer, &Indexer::addPage);
+	QObject::connect(myCrawler, &Crawler::needToAddWord, myIndexer, &Indexer::addWord);
 	QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::save);
 	//QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::searchTest);
 	QObject::connect(myCrawler, &Crawler::finished, &fossenApp, &QCoreApplication::quit);

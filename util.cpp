@@ -2,7 +2,7 @@
 #include "util.hpp"
 #include "simple_hash_func.hpp"
 
-QMap<QString, quint64> ExtractWordsAndFrequencies(const QString &text)
+QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 {
 	const QString lowerText=text.toLower();
 	static const QRegularExpression wordsRegex("[^a-zа-яё]+");

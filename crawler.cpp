@@ -64,19 +64,31 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
 	pageMetadata.urlHash = xorshift_hash_64(pageMetadata.url);
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
-	pageMetadata.words = ExtractWordsAndFrequencies(pageContentText);
 	pageMetadata.wordsTotal = 0;
+
+	QMap<QString, quint64> pageWords = ExtractAndCountWords(pageContentText);
 	QMap<QString, quint64>::ConstIterator pageWordsIt;
-	for(pageWordsIt=pageMetadata.words.constBegin(); pageWordsIt!=pageMetadata.words.constEnd(); pageWordsIt++)
+	for(pageWordsIt=pageWords.constBegin(); pageWordsIt!=pageWords.constEnd(); pageWordsIt++)
 	{
-		pageMetadata.wordsTotal += pageWordsIt.value();
+		const QString &pageWord=pageWordsIt.key();
+		quint64 wordTf=pageWordsIt.value();
+		if(wordTf>0 && !pageWord.isEmpty())
+		{
+			quint64 wordHash=xorshift_hash_64(pageWord.toUtf8());
+			pageMetadata.wordsAsHashes.insert(wordHash, wordTf);
+			pageMetadata.wordsTotal+=wordTf;
+			emit needToAddWord(pageWord);
+		}
 	}
 
+	if(pageMetadata.wordsTotal>0)
+	{
+		emit needToAddPage(pageMetadata);
+	}
+
+	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
+
 	mVisitedURLsHashes.insert(pageMetadata.urlHash);
-
-	qDebug() << pageMetadata.url;
-
-	emit needToIndexNewPage(pageMetadata);
 
 	addURLsToQueue(pageLinksList);
 
