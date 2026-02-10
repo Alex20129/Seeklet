@@ -9,8 +9,9 @@
 class Crawler : public QObject
 {
 	Q_OBJECT
+	uint64_t mPagesRemaining;
 	QRandomGenerator *mRNG;
-	QTimer *mLoadingIntervalTimer;
+	QTimer *mPageLoadingTimer;
 	WebPageProcessor *mWebPageProcessor;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
 	QSet<uint64_t> mVisitedURLsHashes;

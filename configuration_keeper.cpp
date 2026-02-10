@@ -79,9 +79,9 @@ int ConfigurationKeeper::jsCompletionTimeout() const
 
 void ConfigurationKeeper::setPageLoadingIntervalMin(int page_loading_interval_min)
 {
-	if(page_loading_interval_min<10)
+	if(page_loading_interval_min<1)
 	{
-		page_loading_interval_min=10;
+		page_loading_interval_min=1;
 	}
 	mPageLoadingIntervalMin=page_loading_interval_min;
 	if(mPageLoadingIntervalMin>mPageLoadingIntervalMax)
@@ -97,9 +97,9 @@ int ConfigurationKeeper::pageLoadingIntervalMin() const
 
 void ConfigurationKeeper::setPageLoadingIntervalMax(int page_loading_interval_max)
 {
-	if(page_loading_interval_max<10)
+	if(page_loading_interval_max<1)
 	{
-		page_loading_interval_max=10;
+		page_loading_interval_max=1;
 	}
 	mPageLoadingIntervalMax=page_loading_interval_max;
 	if(mPageLoadingIntervalMax<mPageLoadingIntervalMin)
@@ -111,6 +111,20 @@ void ConfigurationKeeper::setPageLoadingIntervalMax(int page_loading_interval_ma
 int ConfigurationKeeper::pageLoadingIntervalMax() const
 {
 	return mPageLoadingIntervalMax;
+}
+
+void ConfigurationKeeper::setPagesPerSession(int pages_per_session)
+{
+	if(pages_per_session<0)
+	{
+		pages_per_session=-1;
+	}
+	mPagesPerSessionMax=pages_per_session;
+}
+
+int ConfigurationKeeper::pagesPerSession() const
+{
+	return mPagesPerSessionMax;
 }
 
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
@@ -274,6 +288,10 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	if(configJsonObject.value("page_loading_interval_max").isDouble())
 	{
 		this->setPageLoadingIntervalMax(configJsonObject.value("page_loading_interval_max").toDouble());
+	}
+	if(configJsonObject.value("pages_per_session").isDouble())
+	{
+		this->setPagesPerSession(configJsonObject.value("pages_per_session").toDouble());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

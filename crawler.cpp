@@ -13,16 +13,18 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mURLListActive=new QList<QUrl>;
 	mURLListQueued=new QList<QUrl>;
 	mRNG=new QRandomGenerator(rngSeed);
-	mLoadingIntervalTimer=new QTimer(this);
+	mPageLoadingTimer=new QTimer(this);
 	mWebPageProcessor=new WebPageProcessor(this);
-	mLoadingIntervalTimer->setSingleShot(1);
+	mPageLoadingTimer->setSingleShot(1);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
-	connect(mLoadingIntervalTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
+	connect(mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 }
 
 Crawler::~Crawler()
 {
 	stop();
+	mURLListActive->clear();
+	mURLListQueued->clear();
 	delete mRNG;
 	delete mURLListQueued;
 	delete mURLListActive;
@@ -40,15 +42,21 @@ void Crawler::loadNextPage()
 			return;
 		}
 	}
+	qDebug()<<"Pages remaining:"<<mPagesRemaining;
+	if(mPagesRemaining>0)
+	{
+		mPagesRemaining--;
+	}
+	else
+	{
+		emit finished();
+		return;
+	}
 	QUrl nextURL = mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
 	mWebPageProcessor->loadPage(nextURL);
 }
-
-#ifndef NDEBUG
-static int visited_n=0;
-#endif
 
 void Crawler::onPageProcessingFinished()
 {
@@ -64,7 +72,8 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
 	pageMetadata.urlHash = xorshift_hash_64(pageMetadata.url);
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
-	pageMetadata.wordsTotal = 0;
+
+	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
 	QMap<QString, quint64> pageWords = ExtractAndCountWords(pageContentText);
 	QMap<QString, quint64>::ConstIterator pageWordsIt;
@@ -86,72 +95,11 @@ void Crawler::onPageProcessingFinished()
 		emit needToAddPage(pageMetadata);
 	}
 
-	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
-
 	mVisitedURLsHashes.insert(pageMetadata.urlHash);
 
 	addURLsToQueue(pageLinksList);
 
-#ifndef NDEBUG
-	// QFile pageHTMLFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".html"));
-	// if(pageHTMLFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	// {
-	// 	pageHTMLFile.write(pageContentHtml.toUtf8());
-	// 	pageHTMLFile.close();
-	// }
-	// else
-	// {
-	// 	qWarning() << "Failed to open page.html";
-	// }
-
-	// QFile pageTXTFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString(".txt"));
-	// if(pageTXTFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	// {
-	// 	pageTXTFile.write(pageContentText.toUtf8());
-	// 	pageTXTFile.close();
-	// }
-	// else
-	// {
-	// 	qWarning() << "Failed to open page.txt";
-	// }
-
-	// QFile pageLinksFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_links.txt"));
-	// if(pageLinksFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	// {
-	// 	for(const QUrl &link : pageLinksList)
-	// 	{
-	// 		pageLinksFile.write(link.toString().toUtf8()+QByteArray("\n"));
-	// 	}
-	// 	pageLinksFile.close();
-	// }
-	// else
-	// {
-	// 	qWarning() << "Failed to open page_links.txt";
-	// }
-
-	// QFile pageWordsFile(QString("page_")+QString::number(pageMetadata.contentHash&UINT32_MAX, 16).toUpper() + QString("_words.txt"));
-	// if(pageWordsFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	// {
-	// 	for(const QString &word : pageMetadata.words.keys())
-	// 	{
-	// 		pageWordsFile.write(word.toUtf8()+" "+QString::number(pageMetadata.words[word]).toUtf8()+QByteArray("\n"));
-	// 	}
-	// 	pageWordsFile.close();
-	// }
-	// else
-	// {
-	// 	qWarning() << "Failed to open page_words.txt";
-	// }
-
-	if(++visited_n>=200)
-	{
-		stop();
-	}
-	else
-#endif
-	{
-		mLoadingIntervalTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
-	}
+	mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
 }
 
 void Crawler::addURLsToQueue(const QList<QUrl> &urls)
@@ -226,11 +174,12 @@ void Crawler::addURLToQueue(const QUrl &url)
 void Crawler::start()
 {
 	qDebug("Crawler::start");
+	mPagesRemaining=gSettings->pagesPerSession();
 	addURLsToQueue(gSettings->startUrls());
-	mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
-	if(!mLoadingIntervalTimer->isActive())
+	if(!mPageLoadingTimer->isActive())
 	{
-		mLoadingIntervalTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
+		mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
+		mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
 		emit started();
 	}
 }
@@ -238,11 +187,6 @@ void Crawler::start()
 void Crawler::stop()
 {
 	qDebug("Crawler::stop");
-	if(mLoadingIntervalTimer->isActive())
-	{
-		mLoadingIntervalTimer->stop();
-		emit finished();
-	}
-	mURLListActive->clear();
-	mURLListQueued->clear();
+	mPageLoadingTimer->stop();
+	mPagesRemaining=0;
 }

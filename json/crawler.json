@@ -7,6 +7,7 @@
 	"js_completion_timeout":2500,
 	"page_loading_interval_min":2000,
 	"page_loading_interval_max":5000,
+	"pages_per_session":500,
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/tagged/linux",
