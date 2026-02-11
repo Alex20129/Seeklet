@@ -298,7 +298,6 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		return;
 	}
 	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
-	bool dictionaryMismatch=false;
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt = pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
 	{
@@ -310,20 +309,20 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		}
 		else
 		{
-			dictionaryMismatch=true;
+			delete pageMetaDataCopy;
+			pageMetaDataCopy=nullptr;
+			break;
 		}
 	}
-	if(dictionaryMismatch)
+	if(nullptr==pageMetaDataCopy)
 	{
-		delete pageMetaDataCopy;
 		return;
 	}
 	for(pageTfIt = pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
-		quint64 wordTf=pageTfIt.value();
 		const QString &word=mDictionaryLookupTable.value(wordHash);
-		if(!word.isEmpty() && wordTf>0)
+		if(!word.isEmpty())
 		{
 			mIndexTableOfContents[word].insert(pageMetaDataCopy->contentHash);
 		}
