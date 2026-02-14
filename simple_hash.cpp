@@ -1,10 +1,10 @@
 #include "simple_hash.hpp"
 
-static const uint64_t MWC64_ALPHA=0x00007F5454545437;
-static const uint64_t FNV64_INITIAL_OFFSET=0xCBF29CE484222325;
-static const uint64_t FNV64_PRIME=0x00000100000001B3;
-static const uint64_t XORSHIFT64_ALPHA=0x2545F4914F6CDD1D;
-static const uint64_t XORSHIFT64_INITIAL_OFFSET=0x7A643C25D6EDAD19;
+static constexpr uint64_t MWC64_ALPHA=0x00007F5454545437;
+static constexpr uint64_t FNV64_INITIAL_OFFSET=0xCBF29CE484222325;
+static constexpr uint64_t FNV64_PRIME=0x00000100000001B3;
+static constexpr uint64_t XORSHIFT64_ALPHA=0x2545F4914F6CDD1D;
+static constexpr uint64_t XORSHIFT64_INITIAL_OFFSET=0x7A643C25D6EDAD19;
 
 uint64_t mwc_hash_64(const uint8_t *data, uint64_t len)
 {

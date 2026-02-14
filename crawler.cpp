@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QRegularExpression>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -6,6 +7,26 @@
 #include "main.hpp"
 #include "crawler.hpp"
 #include "util.hpp"
+
+QMap<QString, quint64> ExtractAndCountWords(const QString &text)
+{
+	const QString lowerText=text.toLower();
+	static const QRegularExpression wordsRegex("[^a-zа-яё]+");
+	static const QRegularExpression digitsRegex("^[0-9]+$");
+	QMap<QString, quint64> wordMap;
+	const QStringList words = lowerText.split(wordsRegex, Qt::SkipEmptyParts);
+	for (const QString &word : words)
+	{
+		if (word.length()>2 && word.length()<33)
+		{
+			if (!digitsRegex.match(word).hasMatch())
+			{
+				wordMap[word] += 1;
+			}
+		}
+	}
+	return wordMap;
+}
 
 Crawler::Crawler(QObject *parent) : QObject(parent)
 {
