@@ -6,7 +6,7 @@ static constexpr uint64_t SEEKLET_PUBLIC_SEED = 0x6812CF04168E45D6;
 
 uint64_t hash_function_64(const QByteArray &data)
 {
-	return xorshiftstar_hash_64((const uint8_t *)data.constData(), data.size(), SEEKLET_PUBLIC_SEED);
+	return xorshiftstar_hash_64((const uint8_t *)data.constData(), data.size());
 }
 
 QByteArray hash_function_128(const QByteArray &data)

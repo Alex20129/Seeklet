@@ -28,16 +28,26 @@ uint64_t fnv1a_hash_64(const uint8_t *data, uint64_t len)
 	return(result);
 }
 
-uint64_t xorshiftstar_hash_64(const uint8_t *data, uint64_t len, uint64_t seed)
+static inline void xorshiftstar_proc(uint64_t &val)
 {
-	uint64_t result=len+(XORSHIFT64_INITIAL_OFFSET^seed), i;
+	val^=val>>13;
+	val^=val<<25;
+	val^=val>>27;
+	val*=XORSHIFT64_ALPHA;
+}
+
+uint64_t xorshiftstar_hash_64(const uint8_t *data, uint64_t len)
+{
+	uint64_t result=len+XORSHIFT64_INITIAL_OFFSET, i;
 	for(i=0; i<len; i++)
 	{
 		result+=data[i];
-		result^=result>>13;
-		result^=result<<25;
-		result^=result>>27;
-		result*=XORSHIFT64_ALPHA;
+		xorshiftstar_proc(result);
+	}
+	for(i=0; i<len; i++)
+	{
+		result+=data[i];
+		xorshiftstar_proc(result);
 	}
 	return(result);
 }
