@@ -1,6 +1,9 @@
 #include <QRegularExpression>
 #include "util.hpp"
-#include "simple_hash_func.hpp"
+#include "simple_hash.hpp"
+#include "metrohash128.hpp"
+
+static constexpr uint64_t seeklet_public_seed = 0x6812CF04168E45D6;
 
 QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 {
@@ -22,22 +25,14 @@ QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 	return wordMap;
 }
 
-uint64_t mwc_hash_64(const QByteArray &data)
+uint64_t hash_function_64(const QByteArray &data)
 {
-	return mwc_hash_64((const uint8_t *)data.data(), data.size());
+	return xorshiftstar_hash_64((const uint8_t *)data.constData(), data.size(), seeklet_public_seed);
 }
 
-uint64_t fnv1a_hash_64(const QByteArray &data)
+QByteArray hash_function_128(const QByteArray &data)
 {
-	return fnv1a_hash_64((const uint8_t *)data.data(), data.size());
-}
-
-uint64_t xorshift_hash_64(const QByteArray &data)
-{
-	return xorshift_hash_64((const uint8_t *)data.data(), data.size());
-}
-
-uint64_t xorshiftstar_hash_64(const QByteArray &data)
-{
-	return xorshiftstar_hash_64((const uint8_t *)data.data(), data.size());
+	uint64_t hash[2];
+	metrohash128_1((const uint8_t *)data.constData(), data.size(), seeklet_public_seed, hash);
+	return QByteArray((const char *)hash, 16);
 }

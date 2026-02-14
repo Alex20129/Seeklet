@@ -5,41 +5,39 @@
 
 PageMetadata::PageMetadata()
 {
-	urlHash=0;
-	contentHash=0;
 	wordsTotal=0;
 }
 
 void PageMetadata::writeToStream(QDataStream &stream) const
 {
-	stream << this->urlHash;
-	stream << this->contentHash;
-	stream << this->wordsTotal;
-	stream << this->timeStamp;
 	stream << this->title;
 	stream << this->url;
+	stream << this->urlHash;
+	stream << this->contentHash;
+	stream << this->timeStamp;
 	stream << this->wordsAsHashes;
+	stream << this->wordsTotal;
 }
 
 void PageMetadata::readFromStream(QDataStream &stream)
 {
-	stream >> this->urlHash;
-	stream >> this->contentHash;
-	stream >> this->wordsTotal;
-	stream >> this->timeStamp;
 	stream >> this->title;
 	stream >> this->url;
+	stream >> this->urlHash;
+	stream >> this->contentHash;
+	stream >> this->timeStamp;
 	stream >> this->wordsAsHashes;
+	stream >> this->wordsTotal;
 }
 
 bool PageMetadata::isValid() const
 {
 	bool result=true;
-	if(urlHash==0)
+	if(urlHash.isEmpty() || urlHash.size()!=16)
 	{
 		result=false;
 	}
-	if(contentHash==0)
+	if(contentHash.isEmpty() || contentHash.size()!=16)
 	{
 		result=false;
 	}
@@ -78,11 +76,11 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "title:" << page_md.title;
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
-	qDebug("contentHash: %llX", page_md.contentHash);
-	qDebug("urlHash: %llX", page_md.urlHash);
+	qDebug() << "contentHash:" << page_md.contentHash.toHex();
+	qDebug() << "urlHash:" << page_md.urlHash.toHex();
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
-	for(pageTfIt = page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
@@ -96,7 +94,7 @@ void Indexer::clear()
 	qDeleteAll(mIndexByContentHash);
 	mIndexByContentHash.clear();
 	mIndexByUrlHash.clear();
-	mIndexTableOfContents.clear();
+	mTableOfContents.clear();
 }
 
 void Indexer::setDatabaseDirectory(const QString &database_directory)
@@ -117,9 +115,9 @@ void Indexer::setDatabaseDirectory(const QString &database_directory)
 
 void Indexer::merge(const Indexer &other)
 {
-	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
+	QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
 	this->mDictionaryLookupTable.insert(other.mDictionaryLookupTable);
-	for(cHashIt = other.mIndexByContentHash.constBegin(); cHashIt != other.mIndexByContentHash.constEnd(); cHashIt++)
+	for(cHashIt=other.mIndexByContentHash.constBegin(); cHashIt != other.mIndexByContentHash.constEnd(); cHashIt++)
 	{
 		const PageMetadata *pageMetaDataPtr=cHashIt.value();
 		if(nullptr!=pageMetaDataPtr)
@@ -129,13 +127,13 @@ void Indexer::merge(const Indexer &other)
 	}
 }
 
-const PageMetadata *Indexer::getPageMetadataByContentHash(uint64_t content_hash) const
+const PageMetadata *Indexer::getPageMetadataByContentHash(const QByteArray &content_hash) const
 {
 	const PageMetadata *page=mIndexByContentHash.value(content_hash, nullptr);
 	return page;
 }
 
-const PageMetadata *Indexer::getPageMetadataByUrlHash(uint64_t url_hash) const
+const PageMetadata *Indexer::getPageMetadataByUrlHash(const QByteArray &url_hash) const
 {
 	const PageMetadata *page=mIndexByUrlHash.value(url_hash, nullptr);
 	return page;
@@ -148,32 +146,36 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	{
 		return searchResults;
 	}
-	QString smallestSetKey;
-	qsizetype smallestSetSize = LONG_LONG_MAX;
+	uint64_t smallestSetKey;
+	QString smallestSetWord;
+	qsizetype smallestSetSize=LONG_LONG_MAX;
 	for(const QString &word : words)
 	{
-		if(!mIndexTableOfContents.contains(word))
+		uint64_t wordHash=hash_function_64(word.toUtf8());
+		if(!mTableOfContents.contains(wordHash))
 		{
 			return searchResults;
 		}
-		if(mIndexTableOfContents[word].size() < smallestSetSize)
+		if(mTableOfContents[wordHash].size() < smallestSetSize)
 		{
-			smallestSetSize = mIndexTableOfContents[word].size();
-			smallestSetKey = word;
+			smallestSetSize=mTableOfContents[wordHash].size();
+			smallestSetKey=wordHash;
+			smallestSetWord=word;
 		}
 	}
-	words.removeAll(smallestSetKey);
-	QSet<quint64> pageSubsetIntersection=mIndexTableOfContents[smallestSetKey];
+	words.removeAll(smallestSetWord);
+	QSet<QByteArray> pageSubsetIntersection=mTableOfContents[smallestSetKey];
 	for(const QString &word : words)
 	{
-		const QSet<quint64> &pageSubset=mIndexTableOfContents[word];
+		uint64_t wordHash=hash_function_64(word.toUtf8());
+		const QSet<QByteArray> &pageSubset=mTableOfContents[wordHash];
 		pageSubsetIntersection.intersect(pageSubset);
 		if(pageSubsetIntersection.isEmpty())
 		{
 			return searchResults;
 		}
 	}
-	for(quint64 hash : pageSubsetIntersection)
+	for(QByteArray hash : pageSubsetIntersection)
 	{
 		const PageMetadata *searchResult=mIndexByContentHash.value(hash, nullptr);
 		if(nullptr!=searchResult)
@@ -184,16 +186,16 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	return searchResults;
 }
 
-double Indexer::calculateTfIdfScore(uint64_t content_hash, const QStringList &words) const
+double Indexer::calculateTfIdfScore(const QByteArray &content_hash, const QStringList &words) const
 {
-	const PageMetadata *pagePtr = mIndexByContentHash.value(content_hash, nullptr);
-	double totalScore = calculateTfIdfScore(pagePtr, words);
+	const PageMetadata *pagePtr=mIndexByContentHash.value(content_hash, nullptr);
+	double totalScore=calculateTfIdfScore(pagePtr, words);
 	return totalScore;
 }
 
 double Indexer::calculateTfIdfScore(const PageMetadata *page, const QStringList &words) const
 {
-	double totalScore = 0.0;
+	double totalScore=0.0;
 	for(const QString &word : words)
 	{
 		totalScore += calculateTfIdfScore(page, word);
@@ -201,10 +203,10 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QStringList 
 	return totalScore;
 }
 
-double Indexer::calculateTfIdfScore(uint64_t content_hash, const QString &word) const
+double Indexer::calculateTfIdfScore(const QByteArray &content_hash, const QString &word) const
 {
-	const PageMetadata *pagePtr = mIndexByContentHash.value(content_hash, nullptr);
-	double score = calculateTfIdfScore(pagePtr, word);
+	const PageMetadata *pagePtr=mIndexByContentHash.value(content_hash, nullptr);
+	double score=calculateTfIdfScore(pagePtr, word);
 	return score;
 }
 
@@ -219,18 +221,18 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 		return 0.0;
 	}
 	double pageWordsTotal=page->wordsTotal;
-	quint64 wordHash=xorshift_hash_64(word.toUtf8());
+	quint64 wordHash=hash_function_64(word.toUtf8());
 	if(page->wordsAsHashes.value(wordHash, 0)==0)
 	{
 		return 0.0;
 	}
 	double tfNormalized=page->wordsAsHashes.value(wordHash, 0);
 	tfNormalized/=pageWordsTotal;
-	if(!mIndexTableOfContents.contains(word))
+	if(!mTableOfContents.contains(wordHash))
 	{
 		return 0.0;
 	}
-	const QSet<quint64> &pageSubset=mIndexTableOfContents[word];
+	const QSet<QByteArray> &pageSubset=mTableOfContents[wordHash];
 	if(pageSubset.isEmpty())
 	{
 		return 0.0;
@@ -263,14 +265,14 @@ void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const 
 	for(const PageMetadata *page : pages)
 	{
 		double tfIdfScore=calculateTfIdfScore(page, words);
-		bool inserted = false;
-		for (int i = 0; i < pageScores.size(); ++i)
+		bool inserted=false;
+		for (int i=0; i < pageScores.size(); ++i)
 		{
 			if(tfIdfScore > pageScores.at(i))
 			{
 				pageScores.insert(i, tfIdfScore);
 				pagesNewOrder.insert(i, page);
-				inserted = true;
+				inserted=true;
 				break;
 			}
 		}
@@ -299,7 +301,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	}
 	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
 	QHash<quint64, quint64>::const_iterator pageTfIt;
-	for(pageTfIt = pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
@@ -310,22 +312,13 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		else
 		{
 			delete pageMetaDataCopy;
-			pageMetaDataCopy=nullptr;
-			break;
+			return;
 		}
 	}
-	if(nullptr==pageMetaDataCopy)
-	{
-		return;
-	}
-	for(pageTfIt = pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
-		const QString &word=mDictionaryLookupTable.value(wordHash);
-		if(!word.isEmpty())
-		{
-			mIndexTableOfContents[word].insert(pageMetaDataCopy->contentHash);
-		}
+		mTableOfContents[wordHash].insert(pageMetaDataCopy->contentHash);
 	}
 	mIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
 	mIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
@@ -333,8 +326,11 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 
 void Indexer::addWord(const QString &word)
 {
-	quint64 wordHash=xorshift_hash_64(word.toUtf8());
-	mDictionaryLookupTable.insert(wordHash, word);
+	if(!word.isEmpty())
+	{
+		quint64 wordHash=hash_function_64(word.toUtf8());
+		mDictionaryLookupTable.insert(wordHash, word);
+	}
 }
 
 void Indexer::save()
@@ -347,8 +343,24 @@ void Indexer::save()
 	QDir dbDir(mDatabaseDirectory);
 
 	quint64 dataStreamVersion=QDataStream::Qt_6_0;
-	QString tocFilePath = dbDir.filePath("index_toc.dat");
-	QString mdFilePath = dbDir.filePath("index_md.dat");
+	QString dltFilePath=dbDir.filePath("index_dlt.dat");
+	QString tocFilePath=dbDir.filePath("index_toc.dat");
+	QString mdFilePath=dbDir.filePath("index_md.dat");
+
+	QFile dltFile(dltFilePath);
+	if(dltFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+	{
+		QDataStream dltFileStream(&dltFile);
+		dltFileStream.setVersion(QDataStream::Qt_6_0);
+		dltFileStream << dataStreamVersion;
+		dltFileStream << mDictionaryLookupTable;
+		dltFile.close();
+		qInfo() << "Dictionary lookup table has been saved successfully:" << mDictionaryLookupTable.size() << "records saved.";
+	}
+	else
+	{
+		qWarning() << "Failed to open" << dltFilePath << "for writing";
+	}
 
 	QFile tocFile(tocFilePath);
 	if(tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -356,10 +368,9 @@ void Indexer::save()
 		QDataStream tocFileStream(&tocFile);
 		tocFileStream.setVersion(QDataStream::Qt_6_0);
 		tocFileStream << dataStreamVersion;
-		tocFileStream << mIndexTableOfContents;
+		tocFileStream << mTableOfContents;
 		tocFile.close();
-		qDebug() << "Table of contents has been saved successfully.";
-		qDebug() << mIndexTableOfContents.size() << "entries saved.";
+		qInfo() << "Table of contents has been saved successfully:" << mTableOfContents.size() << "records saved.";
 	}
 	else
 	{
@@ -372,20 +383,19 @@ void Indexer::save()
 		QDataStream mdFileStream(&mdFile);
 		mdFileStream.setVersion(QDataStream::Qt_6_0);
 		mdFileStream << dataStreamVersion;
-		quint64 numOfPages = mIndexByContentHash.size();
+		quint64 numOfPages=mIndexByContentHash.size();
 		mdFileStream << numOfPages;
-		QHash<quint64, PageMetadata *>::const_iterator cHashIt;
-		for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
+		QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
+		for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
 		{
-			const PageMetadata *pageMDPtr = cHashIt.value();
+			const PageMetadata *pageMDPtr=cHashIt.value();
 			if(nullptr!=pageMDPtr)
 			{
 				pageMDPtr->writeToStream(mdFileStream);
 			}
 		}
 		mdFile.close();
-		qDebug() << "Metadata has been saved successfully.";
-		qDebug() << mIndexByContentHash.size() << "entries saved.";
+		qInfo() << "Metadata has been saved successfully:" << mIndexByContentHash.size() << "records saved.";
 	}
 	else
 	{
@@ -403,10 +413,33 @@ void Indexer::load()
 	QDir dbDir(mDatabaseDirectory);
 
 	quint64 dataStreamVersion, numOfPages;
-	QString tocFilePath = dbDir.filePath("index_toc.dat");
-	QString mdFilePath = dbDir.filePath("index_md.dat");
+	QString dltFilePath=dbDir.filePath("index_dlt.dat");
+	QString tocFilePath=dbDir.filePath("index_toc.dat");
+	QString mdFilePath=dbDir.filePath("index_md.dat");
 
 	this->clear();
+
+	QFile dltFile(dltFilePath);
+	if(dltFile.open(QIODevice::ReadOnly))
+	{
+		QDataStream dltFileStream(&dltFile);
+		dltFileStream.setVersion(QDataStream::Qt_6_0);
+		dltFileStream >> dataStreamVersion;
+		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
+		{
+			dltFileStream >> mDictionaryLookupTable;
+			qInfo() << "Dictionary lookup table has been loaded successfully:" << mDictionaryLookupTable.size() << "new records.";
+		}
+		else
+		{
+			qWarning() << "Unknown file version. Cannot load data from:" << dltFilePath;
+		}
+		dltFile.close();
+	}
+	else
+	{
+		qWarning() << "Failed to open" << dltFilePath << "for reading";
+	}
 
 	QFile tocFile(tocFilePath);
 	if(tocFile.open(QIODevice::ReadOnly))
@@ -416,18 +449,8 @@ void Indexer::load()
 		tocFileStream >> dataStreamVersion;
 		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
 		{
-			tocFileStream >> mIndexTableOfContents;
-			QHash<QString, QSet<quint64>>::ConstIterator tocWordsIt;
-			for(tocWordsIt=mIndexTableOfContents.constBegin(); tocWordsIt!=mIndexTableOfContents.constEnd(); tocWordsIt++)
-			{
-				const QString &tocWord=tocWordsIt.key();
-				if(!tocWord.isEmpty())
-				{
-					quint64 wordHash=xorshift_hash_64(tocWord.toUtf8());
-					mDictionaryLookupTable.insert(wordHash, tocWord);
-				}
-			}
-			qDebug() << "Table of contents has been loaded successfully:" << mIndexTableOfContents.size() << "new records.";
+			tocFileStream >> mTableOfContents;
+			qInfo() << "Table of contents has been loaded successfully:" << mTableOfContents.size() << "new records.";
 		}
 		else
 		{
@@ -467,7 +490,7 @@ void Indexer::load()
 			}
 			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
 			{
-				qDebug() << "Metadata has been loaded successfully:" << mIndexByContentHash.size() << "new records.";
+				qInfo() << "Metadata has been loaded successfully:" << mIndexByContentHash.size() << "new records.";
 			}
 			else
 			{
@@ -487,10 +510,10 @@ void Indexer::load()
 		qWarning() << "Failed to open" << mdFilePath << "for reading";
 	}
 #ifndef NDEBUG
-	QHash<quint64, PageMetadata *>::const_iterator cHashIt;
-	for(cHashIt = mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
+	QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
+	for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
 	{
-		const PageMetadata *pageMDPtr = cHashIt.value();
+		const PageMetadata *pageMDPtr=cHashIt.value();
 		if(nullptr!=pageMDPtr)
 		{
 			printPageMetadata(*pageMDPtr);
@@ -503,12 +526,14 @@ void Indexer::load()
 void Indexer::searchTest()
 {
 	qDebug("Indexer::searchTest");
-	QStringList words;
-	// words.append("business");
-	// words.append("suit");
-	words.append("office");
-	// words.append("hoodie");
-	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(words);
+	QStringList query;
+	// query.append("office");
+	// query.append("business");
+	// query.append("suit");
+	query.append("hoodie");
+	// query.append("wedding");
+	// query.append("dress");
+	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
