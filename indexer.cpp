@@ -68,8 +68,12 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "title:" << page_md.title;
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
-	qDebug() << "contentHash:" << page_md.contentHash;
-	qDebug() << "urlHash:" << page_md.urlHash;
+	qDebug() << "contentHash:"
+		<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
+		<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
+	qDebug() << "urlHash:"
+		<< QByteArray::fromRawData((char *)&page_md.urlHash.second, 8).toHex()
+		<< QByteArray::fromRawData((char *)&page_md.urlHash.first, 8).toHex();
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
@@ -522,9 +526,9 @@ void Indexer::searchTest()
 	// query.append("office");
 	// query.append("business");
 	// query.append("suit");
-	query.append("hoodie");
-	// query.append("wedding");
-	// query.append("dress");
+	// query.append("hoodie");
+	query.append("wedding");
+	query.append("dress");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))

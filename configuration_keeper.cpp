@@ -119,12 +119,12 @@ void ConfigurationKeeper::setPagesPerSession(int pages_per_session)
 	{
 		pages_per_session=-1;
 	}
-	mPagesPerSessionMax=pages_per_session;
+	mPagesPerSession=pages_per_session;
 }
 
 int ConfigurationKeeper::pagesPerSession() const
 {
-	return mPagesPerSessionMax;
+	return mPagesPerSession;
 }
 
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)

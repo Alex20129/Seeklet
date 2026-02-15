@@ -17,7 +17,7 @@ class ConfigurationKeeper : public QObject
 	int mJsCompletionTimeout;
 	int mPageLoadingIntervalMin;
 	int mPageLoadingIntervalMax;
-	int mPagesPerSessionMax;
+	int mPagesPerSession;
 	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
 	QSet<QString> mBlacklistedHosts;
