@@ -16,8 +16,12 @@
 #define XORSHIFT_HASH_HPP
 
 #include <stdint.h>
+#include <QByteArray>
 
 uint64_t xorshiftstar_hash_64(const uint8_t *data, uint64_t len);
-void xorshiftstar_hash_128(const uint8_t *data, uint64_t len, uint64_t *result);
+std::pair<uint64_t, uint64_t> xorshiftstar_hash_128(const uint8_t *data, uint64_t len);
+
+quint64 xorshiftstar_hash_64(const QByteArray &data);
+QPair<quint64, quint64> xorshiftstar_hash_128(const QByteArray &data);
 
 #endif // XORSHIFT_HASH_HPP

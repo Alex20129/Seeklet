@@ -33,6 +33,4 @@ ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
 	web_page_processor.hpp
 	web_page_processor.cpp
 	xorshift_hash.hpp
-	xorshift_hash.cpp
-	util.hpp
-	util.cpp)
+	xorshift_hash.cpp)

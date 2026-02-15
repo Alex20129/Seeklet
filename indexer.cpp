@@ -1,7 +1,7 @@
 #include <QDir>
 #include "main.hpp"
 #include "indexer.hpp"
-#include "util.hpp"
+#include "xorshift_hash.hpp"
 
 PageMetadata::PageMetadata()
 {
@@ -33,14 +33,6 @@ void PageMetadata::readFromStream(QDataStream &stream)
 bool PageMetadata::isValid() const
 {
 	bool result=true;
-	if(urlHash.isEmpty() || urlHash.size()!=16)
-	{
-		result=false;
-	}
-	if(contentHash.isEmpty() || contentHash.size()!=16)
-	{
-		result=false;
-	}
 	if(wordsTotal==0)
 	{
 		result=false;
@@ -76,8 +68,8 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "title:" << page_md.title;
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
-	qDebug() << "contentHash:" << page_md.contentHash.toHex();
-	qDebug() << "urlHash:" << page_md.urlHash.toHex();
+	qDebug() << "contentHash:" << page_md.contentHash;
+	qDebug() << "urlHash:" << page_md.urlHash;
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
@@ -115,8 +107,8 @@ void Indexer::setDatabaseDirectory(const QString &database_directory)
 
 void Indexer::merge(const Indexer &other)
 {
-	QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
 	this->mDictionaryLookupTable.insert(other.mDictionaryLookupTable);
+	QHash<Hash128, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt=other.mIndexByContentHash.constBegin(); cHashIt != other.mIndexByContentHash.constEnd(); cHashIt++)
 	{
 		const PageMetadata *pageMetaDataPtr=cHashIt.value();
@@ -127,13 +119,13 @@ void Indexer::merge(const Indexer &other)
 	}
 }
 
-const PageMetadata *Indexer::getPageMetadataByContentHash(const QByteArray &content_hash) const
+const PageMetadata *Indexer::getPageMetadataByContentHash(const Hash128 &content_hash) const
 {
 	const PageMetadata *page=mIndexByContentHash.value(content_hash, nullptr);
 	return page;
 }
 
-const PageMetadata *Indexer::getPageMetadataByUrlHash(const QByteArray &url_hash) const
+const PageMetadata *Indexer::getPageMetadataByUrlHash(const Hash128 &url_hash) const
 {
 	const PageMetadata *page=mIndexByUrlHash.value(url_hash, nullptr);
 	return page;
@@ -151,7 +143,7 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	qsizetype smallestSetSize=LONG_LONG_MAX;
 	for(const QString &word : words)
 	{
-		uint64_t wordHash=hash_function_64(word.toUtf8());
+		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 		if(!mTableOfContents.contains(wordHash))
 		{
 			return searchResults;
@@ -164,18 +156,18 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 		}
 	}
 	words.removeAll(smallestSetWord);
-	QSet<QByteArray> pageSubsetIntersection=mTableOfContents[smallestSetKey];
+	QSet<Hash128> pageSubsetIntersection=mTableOfContents[smallestSetKey];
 	for(const QString &word : words)
 	{
-		uint64_t wordHash=hash_function_64(word.toUtf8());
-		const QSet<QByteArray> &pageSubset=mTableOfContents[wordHash];
+		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
+		const QSet<Hash128> &pageSubset=mTableOfContents[wordHash];
 		pageSubsetIntersection.intersect(pageSubset);
 		if(pageSubsetIntersection.isEmpty())
 		{
 			return searchResults;
 		}
 	}
-	for(QByteArray hash : pageSubsetIntersection)
+	for(Hash128 hash : pageSubsetIntersection)
 	{
 		const PageMetadata *searchResult=mIndexByContentHash.value(hash, nullptr);
 		if(nullptr!=searchResult)
@@ -186,7 +178,7 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	return searchResults;
 }
 
-double Indexer::calculateTfIdfScore(const QByteArray &content_hash, const QStringList &words) const
+double Indexer::calculateTfIdfScore(const Hash128 &content_hash, const QStringList &words) const
 {
 	const PageMetadata *pagePtr=mIndexByContentHash.value(content_hash, nullptr);
 	double totalScore=calculateTfIdfScore(pagePtr, words);
@@ -203,7 +195,7 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QStringList 
 	return totalScore;
 }
 
-double Indexer::calculateTfIdfScore(const QByteArray &content_hash, const QString &word) const
+double Indexer::calculateTfIdfScore(const Hash128 &content_hash, const QString &word) const
 {
 	const PageMetadata *pagePtr=mIndexByContentHash.value(content_hash, nullptr);
 	double score=calculateTfIdfScore(pagePtr, word);
@@ -221,7 +213,7 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 		return 0.0;
 	}
 	double pageWordsTotal=page->wordsTotal;
-	quint64 wordHash=hash_function_64(word.toUtf8());
+	quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 	if(page->wordsAsHashes.value(wordHash, 0)==0)
 	{
 		return 0.0;
@@ -232,7 +224,7 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 	{
 		return 0.0;
 	}
-	const QSet<QByteArray> &pageSubset=mTableOfContents[wordHash];
+	const QSet<Hash128> &pageSubset=mTableOfContents[wordHash];
 	if(pageSubset.isEmpty())
 	{
 		return 0.0;
@@ -328,7 +320,7 @@ void Indexer::addWord(const QString &word)
 {
 	if(!word.isEmpty())
 	{
-		quint64 wordHash=hash_function_64(word.toUtf8());
+		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 		mDictionaryLookupTable.insert(wordHash, word);
 	}
 }
@@ -385,7 +377,7 @@ void Indexer::save()
 		mdFileStream << dataStreamVersion;
 		quint64 numOfPages=mIndexByContentHash.size();
 		mdFileStream << numOfPages;
-		QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
+		QHash<Hash128, PageMetadata *>::const_iterator cHashIt;
 		for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
 		{
 			const PageMetadata *pageMDPtr=cHashIt.value();
@@ -510,7 +502,7 @@ void Indexer::load()
 		qWarning() << "Failed to open" << mdFilePath << "for reading";
 	}
 #ifndef NDEBUG
-	QHash<QByteArray, PageMetadata *>::const_iterator cHashIt;
+	QHash<Hash128, PageMetadata *>::const_iterator cHashIt;
 	for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
 	{
 		const PageMetadata *pageMDPtr=cHashIt.value();

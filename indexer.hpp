@@ -6,12 +6,14 @@
 #include <QDateTime>
 #include <QDataStream>
 
+typedef QPair<quint64, quint64> Hash128;
+
 struct PageMetadata
 {
 	QString title;
 	QByteArray url;
-	QByteArray urlHash;
-	QByteArray contentHash;
+	Hash128 urlHash;
+	Hash128 contentHash;
 	QDateTime timeStamp;
 	QHash<quint64, quint64> wordsAsHashes;
 	quint64 wordsTotal;
@@ -25,9 +27,9 @@ class Indexer : public QObject
 {
 	Q_OBJECT
 	QHash<quint64, QString> mDictionaryLookupTable;
-	QHash<quint64, QSet<QByteArray>> mTableOfContents;
-	QHash<QByteArray, PageMetadata *> mIndexByContentHash;
-	QHash<QByteArray, PageMetadata *> mIndexByUrlHash;
+	QHash<quint64, QSet<Hash128>> mTableOfContents;
+	QHash<Hash128, PageMetadata *> mIndexByContentHash;
+	QHash<Hash128, PageMetadata *> mIndexByUrlHash;
 	QString mDatabaseDirectory;
 public:
 	Indexer(QObject *parent = nullptr);
@@ -38,12 +40,12 @@ public:
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
 	void merge(const Indexer &other);
-	const PageMetadata *getPageMetadataByContentHash(const QByteArray &content_hash) const;
-	const PageMetadata *getPageMetadataByUrlHash(const QByteArray &url_hash) const;
+	const PageMetadata *getPageMetadataByContentHash(const Hash128 &content_hash) const;
+	const PageMetadata *getPageMetadataByUrlHash(const Hash128 &url_hash) const;
 	QVector<const PageMetadata *> searchPagesByWords(QStringList words) const;
-	double calculateTfIdfScore(const QByteArray &content_hash, const QStringList &words) const;
+	double calculateTfIdfScore(const Hash128 &content_hash, const QStringList &words) const;
 	double calculateTfIdfScore(const PageMetadata *page, const QStringList &words) const;
-	double calculateTfIdfScore(const QByteArray &content_hash, const QString &word) const;
+	double calculateTfIdfScore(const Hash128 &content_hash, const QString &word) const;
 	double calculateTfIdfScore(const PageMetadata *page, const QString &word) const;
 	void sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const;
 public slots:

@@ -6,7 +6,7 @@
 #include <QDebug>
 #include "main.hpp"
 #include "crawler.hpp"
-#include "util.hpp"
+#include "xorshift_hash.hpp"
 
 QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 {
@@ -91,8 +91,8 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
-	pageMetadata.contentHash = hash_function_128(pageContentHtml.toUtf8());
-	pageMetadata.urlHash = hash_function_128(pageMetadata.url);
+	pageMetadata.contentHash = xorshiftstar_hash_128(pageContentHtml.toUtf8());
+	pageMetadata.urlHash = xorshiftstar_hash_128(pageMetadata.url);
 
 	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
@@ -104,7 +104,7 @@ void Crawler::onPageProcessingFinished()
 		quint64 wordTf=pageWordsIt.value();
 		if(wordTf>0 && !pageWord.isEmpty())
 		{
-			quint64 wordHash=hash_function_64(pageWord.toUtf8());
+			quint64 wordHash=xorshiftstar_hash_64(pageWord.toUtf8());
 			pageMetadata.wordsAsHashes.insert(wordHash, wordTf);
 			pageMetadata.wordsTotal+=wordTf;
 			emit needToAddWord(pageWord);
@@ -143,7 +143,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
-	QByteArray urlHash = hash_function_128(urlAdjusted.toEncoded());
+	Hash128 urlHash = xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;

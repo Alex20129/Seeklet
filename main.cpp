@@ -10,6 +10,9 @@ int main(int argc, char **argv)
 	gSettings = new ConfigurationKeeper();
 	gSettings->loadSettingsFromJsonFile("crawler.json");
 
+	fprintf(stdout, "%lu\n", sizeof(size_t));
+	return 56;
+
 	QApplication fossenApp(argc, argv);
 
 	Crawler *myCrawler=new Crawler;

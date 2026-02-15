@@ -13,7 +13,7 @@ class Crawler : public QObject
 	QTimer *mPageLoadingTimer;
 	WebPageProcessor *mWebPageProcessor;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
-	QSet<QByteArray> mVisitedURLsHashes;
+	QSet<Hash128> mVisitedURLsHashes;
 private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();
