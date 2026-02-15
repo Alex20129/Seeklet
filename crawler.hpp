@@ -1,7 +1,6 @@
 #ifndef CRAWLER_HPP
 #define CRAWLER_HPP
 
-#include <QTimer>
 #include <QRandomGenerator>
 #include "web_page_processor.hpp"
 #include "indexer.hpp"
@@ -14,7 +13,7 @@ class Crawler : public QObject
 	QTimer *mPageLoadingTimer;
 	WebPageProcessor *mWebPageProcessor;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
-	QSet<uint64_t> mVisitedURLsHashes;
+	QSet<QByteArray> mVisitedURLsHashes;
 private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();

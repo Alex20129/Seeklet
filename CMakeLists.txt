@@ -30,9 +30,9 @@ ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
 	configuration_keeper.cpp
 	indexer.hpp
 	indexer.cpp
-	simple_hash_func.hpp
-	simple_hash_func.cpp
 	web_page_processor.hpp
 	web_page_processor.cpp
+	xorshift_hash.hpp
+	xorshift_hash.cpp
 	util.hpp
 	util.cpp)

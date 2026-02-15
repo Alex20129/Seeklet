@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QRegularExpression>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -7,6 +8,26 @@
 #include "crawler.hpp"
 #include "util.hpp"
 
+QMap<QString, quint64> ExtractAndCountWords(const QString &text)
+{
+	const QString lowerText=text.toLower();
+	static const QRegularExpression wordsRegex("[^a-zа-яё]+");
+	static const QRegularExpression digitsRegex("^[0-9]+$");
+	QMap<QString, quint64> wordMap;
+	const QStringList words = lowerText.split(wordsRegex, Qt::SkipEmptyParts);
+	for (const QString &word : words)
+	{
+		if (word.length()>2 && word.length()<33)
+		{
+			if (!digitsRegex.match(word).hasMatch())
+			{
+				wordMap[word] += 1;
+			}
+		}
+	}
+	return wordMap;
+}
+
 Crawler::Crawler(QObject *parent) : QObject(parent)
 {
 	uint32_t rngSeed=QDateTime::currentSecsSinceEpoch()+reinterpret_cast<uintptr_t>(this);
@@ -14,10 +35,10 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mURLListQueued=new QList<QUrl>;
 	mRNG=new QRandomGenerator(rngSeed);
 	mPageLoadingTimer=new QTimer(this);
-	mWebPageProcessor=new WebPageProcessor(this);
 	mPageLoadingTimer->setSingleShot(1);
-	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
+	mWebPageProcessor=new WebPageProcessor(this);
 	connect(mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
+	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 }
 
 Crawler::~Crawler()
@@ -68,10 +89,10 @@ void Crawler::onPageProcessingFinished()
 	PageMetadata pageMetadata;
 
 	pageMetadata.timeStamp = QDateTime::currentDateTime();
-	pageMetadata.contentHash = xorshift_hash_64(pageContentHtml.toUtf8());
-	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
-	pageMetadata.urlHash = xorshift_hash_64(pageMetadata.url);
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
+	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
+	pageMetadata.contentHash = hash_function_128(pageContentHtml.toUtf8());
+	pageMetadata.urlHash = hash_function_128(pageMetadata.url);
 
 	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
@@ -83,7 +104,7 @@ void Crawler::onPageProcessingFinished()
 		quint64 wordTf=pageWordsIt.value();
 		if(wordTf>0 && !pageWord.isEmpty())
 		{
-			quint64 wordHash=xorshift_hash_64(pageWord.toUtf8());
+			quint64 wordHash=hash_function_64(pageWord.toUtf8());
 			pageMetadata.wordsAsHashes.insert(wordHash, wordTf);
 			pageMetadata.wordsTotal+=wordTf;
 			emit needToAddWord(pageWord);
@@ -99,7 +120,14 @@ void Crawler::onPageProcessingFinished()
 
 	addURLsToQueue(pageLinksList);
 
-	mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
+	if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
+	{
+		mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
+	}
+	else
+	{
+		mPageLoadingTimer->start(gSettings->pageLoadingIntervalMin());
+	}
 }
 
 void Crawler::addURLsToQueue(const QList<QUrl> &urls)
@@ -115,7 +143,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
-	uint64_t urlHash = xorshift_hash_64(urlAdjusted.toEncoded());
+	QByteArray urlHash = hash_function_128(urlAdjusted.toEncoded());
 	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;
@@ -179,7 +207,14 @@ void Crawler::start()
 	if(!mPageLoadingTimer->isActive())
 	{
 		mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
-		mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()+1));
+		if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
+		{
+			mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
+		}
+		else
+		{
+			mPageLoadingTimer->start(gSettings->pageLoadingIntervalMin());
+		}
 		emit started();
 	}
 }
