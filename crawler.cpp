@@ -92,7 +92,9 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.title = mWebPageProcessor->getPageTitle();
 	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
 	pageMetadata.contentHash = xorshiftstar_hash_128(pageContentHtml.toUtf8());
-	pageMetadata.urlHash = xorshiftstar_hash_128(pageMetadata.url);
+
+	Hash128 urlHash = xorshiftstar_hash_128(pageMetadata.url);
+	mVisitedURLsHashes.insert(urlHash);
 
 	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
@@ -115,8 +117,6 @@ void Crawler::onPageProcessingFinished()
 	{
 		emit needToAddPage(pageMetadata);
 	}
-
-	mVisitedURLsHashes.insert(pageMetadata.urlHash);
 
 	addURLsToQueue(pageLinksList);
 

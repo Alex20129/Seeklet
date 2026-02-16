@@ -12,10 +12,9 @@ struct PageMetadata
 {
 	QString title;
 	QByteArray url;
-	Hash128 urlHash;
-	Hash128 contentHash;
 	QDateTime timeStamp;
 	QHash<quint64, quint64> wordsAsHashes;
+	Hash128 contentHash;
 	quint64 wordsTotal;
 	PageMetadata();
 	void writeToStream(QDataStream &stream) const;

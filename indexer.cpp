@@ -12,10 +12,9 @@ void PageMetadata::writeToStream(QDataStream &stream) const
 {
 	stream << this->title;
 	stream << this->url;
-	stream << this->urlHash;
-	stream << this->contentHash;
 	stream << this->timeStamp;
 	stream << this->wordsAsHashes;
+	stream << this->contentHash;
 	stream << this->wordsTotal;
 }
 
@@ -23,10 +22,9 @@ void PageMetadata::readFromStream(QDataStream &stream)
 {
 	stream >> this->title;
 	stream >> this->url;
-	stream >> this->urlHash;
-	stream >> this->contentHash;
 	stream >> this->timeStamp;
 	stream >> this->wordsAsHashes;
+	stream >> this->contentHash;
 	stream >> this->wordsTotal;
 }
 
@@ -71,9 +69,6 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "contentHash:"
 		<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
 		<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
-	qDebug() << "urlHash:"
-		<< QByteArray::fromRawData((char *)&page_md.urlHash.second, 8).toHex()
-		<< QByteArray::fromRawData((char *)&page_md.urlHash.first, 8).toHex();
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
@@ -287,11 +282,12 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	{
 		return;
 	}
-	if(mIndexByUrlHash.contains(page_metadata.urlHash))
+	if(mIndexByContentHash.contains(page_metadata.contentHash))
 	{
 		return;
 	}
-	if(mIndexByContentHash.contains(page_metadata.contentHash))
+	Hash128 urlHash = xorshiftstar_hash_128(page_metadata.url);
+	if(mIndexByUrlHash.contains(urlHash))
 	{
 		return;
 	}
@@ -316,7 +312,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		quint64 wordHash=pageTfIt.key();
 		mTableOfContents[wordHash].insert(pageMetaDataCopy->contentHash);
 	}
-	mIndexByUrlHash.insert(pageMetaDataCopy->urlHash, pageMetaDataCopy);
+	mIndexByUrlHash.insert(urlHash, pageMetaDataCopy);
 	mIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
 }
 
@@ -472,16 +468,17 @@ void Indexer::load()
 			{
 				PageMetadata newPageMetadata;
 				newPageMetadata.readFromStream(mdFileStream);
-				if(mIndexByUrlHash.contains(newPageMetadata.urlHash))
-				{
-					continue;
-				}
 				if(mIndexByContentHash.contains(newPageMetadata.contentHash))
 				{
 					continue;
 				}
+				Hash128 urlHash = xorshiftstar_hash_128(newPageMetadata.url);
+				if(mIndexByUrlHash.contains(urlHash))
+				{
+					continue;
+				}
 				PageMetadata *pageMetadataCopy=new PageMetadata(newPageMetadata);
-				mIndexByUrlHash.insert(pageMetadataCopy->urlHash, pageMetadataCopy);
+				mIndexByUrlHash.insert(urlHash, pageMetadataCopy);
 				mIndexByContentHash.insert(pageMetadataCopy->contentHash, pageMetadataCopy);
 			}
 			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
