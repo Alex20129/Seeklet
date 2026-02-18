@@ -488,18 +488,7 @@ void Indexer::load()
 			{
 				PageMetadata newPageMetadata;
 				newPageMetadata.readFromStream(mdFileStream);
-				if(mIndexByContentHash.contains(newPageMetadata.contentHash))
-				{
-					continue;
-				}
-				Hash128 urlHash = xorshiftstar_hash_128(newPageMetadata.url);
-				if(mIndexByUrlHash.contains(urlHash))
-				{
-					continue;
-				}
-				PageMetadata *pageMetadataCopy=new PageMetadata(newPageMetadata);
-				mIndexByUrlHash.insert(urlHash, pageMetadataCopy);
-				mIndexByContentHash.insert(pageMetadataCopy->contentHash, pageMetadataCopy);
+				addPage(newPageMetadata);
 			}
 			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
 			{
