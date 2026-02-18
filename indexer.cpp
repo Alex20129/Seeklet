@@ -86,6 +86,7 @@ void Indexer::clear()
 	mIndexByContentHash.clear();
 	mIndexByUrlHash.clear();
 	mTableOfContents.clear();
+	mDictionaryLookupTable.clear();
 }
 
 void Indexer::setDatabaseDirectory(const QString &database_directory)
@@ -342,9 +343,11 @@ void Indexer::save()
 	QFile dltFile(dltFilePath);
 	if(dltFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
+		quint64 dltSize=mDictionaryLookupTable.size();
 		QDataStream dltFileStream(&dltFile);
 		dltFileStream.setVersion(QDataStream::Qt_6_0);
 		dltFileStream << dataStreamVersion;
+		dltFileStream << dltSize;
 		dltFileStream << mDictionaryLookupTable;
 		dltFile.close();
 		qInfo() << "Dictionary lookup table has been saved successfully:" << mDictionaryLookupTable.size() << "records saved.";
@@ -357,9 +360,11 @@ void Indexer::save()
 	QFile tocFile(tocFilePath);
 	if(tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
+		quint64 tocSize=mTableOfContents.size();
 		QDataStream tocFileStream(&tocFile);
 		tocFileStream.setVersion(QDataStream::Qt_6_0);
 		tocFileStream << dataStreamVersion;
+		tocFileStream << tocSize;
 		tocFileStream << mTableOfContents;
 		tocFile.close();
 		qInfo() << "Table of contents has been saved successfully:" << mTableOfContents.size() << "records saved.";
@@ -372,10 +377,10 @@ void Indexer::save()
 	QFile mdFile(mdFilePath);
 	if(mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
+		quint64 numOfPages=mIndexByContentHash.size();
 		QDataStream mdFileStream(&mdFile);
 		mdFileStream.setVersion(QDataStream::Qt_6_0);
 		mdFileStream << dataStreamVersion;
-		quint64 numOfPages=mIndexByContentHash.size();
 		mdFileStream << numOfPages;
 		QHash<Hash128, PageMetadata *>::const_iterator cHashIt;
 		for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
@@ -404,7 +409,7 @@ void Indexer::load()
 	}
 	QDir dbDir(mDatabaseDirectory);
 
-	quint64 dataStreamVersion, numOfPages;
+	quint64 dataStreamVersion;
 	QString dltFilePath=dbDir.filePath("index_dlt.dat");
 	QString tocFilePath=dbDir.filePath("index_toc.dat");
 	QString mdFilePath=dbDir.filePath("index_md.dat");
@@ -414,13 +419,19 @@ void Indexer::load()
 	QFile dltFile(dltFilePath);
 	if(dltFile.open(QIODevice::ReadOnly))
 	{
+		quint64 dltSize;
 		QDataStream dltFileStream(&dltFile);
 		dltFileStream.setVersion(QDataStream::Qt_6_0);
 		dltFileStream >> dataStreamVersion;
 		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
 		{
-			dltFileStream >> mDictionaryLookupTable;
-			qInfo() << "Dictionary lookup table has been loaded successfully:" << mDictionaryLookupTable.size() << "new records.";
+			dltFileStream >> dltSize;
+			if(dltSize>0)
+			{
+				mDictionaryLookupTable.reserve(dltSize);
+				dltFileStream >> mDictionaryLookupTable;
+				qInfo() << "Dictionary lookup table has been loaded successfully:" << mDictionaryLookupTable.size() << "new records.";
+			}
 		}
 		else
 		{
@@ -436,13 +447,19 @@ void Indexer::load()
 	QFile tocFile(tocFilePath);
 	if(tocFile.open(QIODevice::ReadOnly))
 	{
+		quint64 tocSize;
 		QDataStream tocFileStream(&tocFile);
 		tocFileStream.setVersion(QDataStream::Qt_6_0);
 		tocFileStream >> dataStreamVersion;
 		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
 		{
-			tocFileStream >> mTableOfContents;
-			qInfo() << "Table of contents has been loaded successfully:" << mTableOfContents.size() << "new records.";
+			tocFileStream >> tocSize;
+			if(tocSize>0)
+			{
+				mTableOfContents.reserve(tocSize);
+				tocFileStream >> mTableOfContents;
+				qInfo() << "Table of contents has been loaded successfully:" << mTableOfContents.size() << "new records.";
+			}
 		}
 		else
 		{
@@ -458,12 +475,15 @@ void Indexer::load()
 	QFile mdFile(mdFilePath);
 	if(mdFile.open(QIODevice::ReadOnly))
 	{
+		quint64 numOfPages;
 		QDataStream mdFileStream(&mdFile);
 		mdFileStream.setVersion(QDataStream::Qt_6_0);
 		mdFileStream >> dataStreamVersion;
 		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
 		{
 			mdFileStream >> numOfPages;
+			mIndexByContentHash.reserve(numOfPages);
+			mIndexByUrlHash.reserve(numOfPages);
 			for(quint64 page=0; page<numOfPages; page++)
 			{
 				PageMetadata newPageMetadata;
