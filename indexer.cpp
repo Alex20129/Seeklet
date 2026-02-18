@@ -287,14 +287,8 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	{
 		return;
 	}
-	Hash128 urlHash = xorshiftstar_hash_128(page_metadata.url);
-	if(mIndexByUrlHash.contains(urlHash))
-	{
-		return;
-	}
-	PageMetadata *pageMetaDataCopy=new PageMetadata(page_metadata);
 	QHash<quint64, quint64>::const_iterator pageTfIt;
-	for(pageTfIt=pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=page_metadata.wordsAsHashes.constBegin(); pageTfIt != page_metadata.wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
@@ -304,17 +298,50 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		}
 		else
 		{
-			delete pageMetaDataCopy;
 			return;
 		}
 	}
-	for(pageTfIt=pageMetaDataCopy->wordsAsHashes.constBegin(); pageTfIt != pageMetaDataCopy->wordsAsHashes.constEnd(); pageTfIt++)
+	PageMetadata *newPageMetaData=new PageMetadata(page_metadata);
+	Hash128 urlHash=xorshiftstar_hash_128(newPageMetaData->url);
+	if(mIndexByUrlHash.contains(urlHash))
+	{
+		PageMetadata *oldPageMetaData=mIndexByUrlHash.value(urlHash);
+		deletePage(oldPageMetaData);
+	}
+	for(pageTfIt=newPageMetaData->wordsAsHashes.constBegin(); pageTfIt != newPageMetaData->wordsAsHashes.constEnd(); pageTfIt++)
 	{
 		quint64 wordHash=pageTfIt.key();
-		mTableOfContents[wordHash].insert(pageMetaDataCopy->contentHash);
+		mTableOfContents[wordHash].insert(newPageMetaData->contentHash);
 	}
-	mIndexByUrlHash.insert(urlHash, pageMetaDataCopy);
-	mIndexByContentHash.insert(pageMetaDataCopy->contentHash, pageMetaDataCopy);
+	mIndexByUrlHash.insert(urlHash, newPageMetaData);
+	mIndexByContentHash.insert(newPageMetaData->contentHash, newPageMetaData);
+}
+
+void Indexer::deletePage(PageMetadata *page_metadata)
+{
+	if(nullptr==page_metadata)
+	{
+		return;
+	}
+	Hash128 contentHash=page_metadata->contentHash;
+	Hash128 urlHash=xorshiftstar_hash_128(page_metadata->url);
+	mIndexByContentHash.remove(contentHash);
+	mIndexByUrlHash.remove(urlHash);
+	QHash<quint64, quint64>::const_iterator wordHashIt;
+	for(wordHashIt=page_metadata->wordsAsHashes.constBegin(); wordHashIt != page_metadata->wordsAsHashes.constEnd(); wordHashIt++)
+	{
+		quint64 wordHash=wordHashIt.key();
+		QHash<quint64, QSet<Hash128>>::iterator tocIt=mTableOfContents.find(wordHash);
+		if(tocIt != mTableOfContents.end())
+		{
+			tocIt.value().remove(contentHash);
+			if(tocIt.value().isEmpty())
+			{
+				mTableOfContents.erase(tocIt);
+			}
+		}
+	}
+	delete page_metadata;
 }
 
 void Indexer::addWord(const QString &word)
@@ -532,9 +559,9 @@ void Indexer::searchTest()
 	// query.append("office");
 	// query.append("business");
 	// query.append("suit");
-	// query.append("hoodie");
-	query.append("wedding");
-	query.append("dress");
+	query.append("hoodie");
+	//query.append("wedding");
+	//query.append("dress");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))

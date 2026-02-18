@@ -49,6 +49,7 @@ public:
 	void sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const;
 public slots:
 	void addPage(const PageMetadata &page_metadata);
+	void deletePage(PageMetadata *page_metadata);
 	void addWord(const QString &word);
 	void save();
 	void load();
