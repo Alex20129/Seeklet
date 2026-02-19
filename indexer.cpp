@@ -364,7 +364,6 @@ void Indexer::save()
 
 	quint64 dataStreamVersion=QDataStream::Qt_6_0;
 	QString dltFilePath=dbDir.filePath("index_dlt.dat");
-	QString tocFilePath=dbDir.filePath("index_toc.dat");
 	QString mdFilePath=dbDir.filePath("index_md.dat");
 
 	QFile dltFile(dltFilePath);
@@ -382,23 +381,6 @@ void Indexer::save()
 	else
 	{
 		qWarning() << "Failed to open" << dltFilePath << "for writing";
-	}
-
-	QFile tocFile(tocFilePath);
-	if(tocFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		quint64 tocSize=mTableOfContents.size();
-		QDataStream tocFileStream(&tocFile);
-		tocFileStream.setVersion(QDataStream::Qt_6_0);
-		tocFileStream << dataStreamVersion;
-		tocFileStream << tocSize;
-		tocFileStream << mTableOfContents;
-		tocFile.close();
-		qInfo() << "Table of contents has been saved successfully:" << mTableOfContents.size() << "records saved.";
-	}
-	else
-	{
-		qWarning() << "Failed to open" << tocFilePath << "for writing";
 	}
 
 	QFile mdFile(mdFilePath);
@@ -438,7 +420,6 @@ void Indexer::load()
 
 	quint64 dataStreamVersion;
 	QString dltFilePath=dbDir.filePath("index_dlt.dat");
-	QString tocFilePath=dbDir.filePath("index_toc.dat");
 	QString mdFilePath=dbDir.filePath("index_md.dat");
 
 	this->clear();
@@ -456,6 +437,7 @@ void Indexer::load()
 			if(dltSize>0)
 			{
 				mDictionaryLookupTable.reserve(dltSize);
+				mTableOfContents.reserve(dltSize);
 				dltFileStream >> mDictionaryLookupTable;
 				qInfo() << "Dictionary lookup table has been loaded successfully:" << mDictionaryLookupTable.size() << "new records.";
 			}
@@ -469,34 +451,6 @@ void Indexer::load()
 	else
 	{
 		qWarning() << "Failed to open" << dltFilePath << "for reading";
-	}
-
-	QFile tocFile(tocFilePath);
-	if(tocFile.open(QIODevice::ReadOnly))
-	{
-		quint64 tocSize;
-		QDataStream tocFileStream(&tocFile);
-		tocFileStream.setVersion(QDataStream::Qt_6_0);
-		tocFileStream >> dataStreamVersion;
-		if(dataStreamVersion==(quint64)(QDataStream::Qt_6_0))
-		{
-			tocFileStream >> tocSize;
-			if(tocSize>0)
-			{
-				mTableOfContents.reserve(tocSize);
-				tocFileStream >> mTableOfContents;
-				qInfo() << "Table of contents has been loaded successfully:" << mTableOfContents.size() << "new records.";
-			}
-		}
-		else
-		{
-			qWarning() << "Unknown file version. Cannot load data from:" << tocFilePath;
-		}
-		tocFile.close();
-	}
-	else
-	{
-		qWarning() << "Failed to open" << tocFilePath << "for reading";
 	}
 
 	QFile mdFile(mdFilePath);
@@ -538,17 +492,6 @@ void Indexer::load()
 	{
 		qWarning() << "Failed to open" << mdFilePath << "for reading";
 	}
-#ifndef NDEBUG
-	QHash<Hash128, PageMetadata *>::const_iterator cHashIt;
-	for(cHashIt=mIndexByContentHash.constBegin(); cHashIt!=mIndexByContentHash.constEnd(); cHashIt++)
-	{
-		const PageMetadata *pageMDPtr=cHashIt.value();
-		if(nullptr!=pageMDPtr)
-		{
-			printPageMetadata(*pageMDPtr);
-		}
-	}
-#endif
 }
 
 #ifndef NDEBUG
@@ -575,12 +518,6 @@ void Indexer::searchTest()
 			searchResultFile.write("\">");
 			searchResultFile.write(pageMDPtr->title.toStdString().data());
 			searchResultFile.write("</a><br>\n");
-			// searchResultFile.write(pageMDPtr->timeStamp.toString().toStdString().data());
-			// searchResultFile.write("\n");
-			// searchResultFile.write(QByteArray::number(pageMDPtr->urlHash).toStdString().data());
-			// searchResultFile.write("\n");
-			// searchResultFile.write(QByteArray::number(pageMDPtr->contentHash).toStdString().data());
-			// searchResultFile.write("\n");
 		}
 		searchResultFile.write("</html>\n");
 		searchResultFile.close();
