@@ -5,11 +5,11 @@
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as published
- * by the Free Software Foundation.You should have received a copy of the
+ * by the Free Software Foundation. You should have received a copy of the
  * GNU General Public License along with this program. If not, see
  * < https://www.gnu.org/licenses/gpl-3.0.txt >
  *
- * This program is distributed without any warranty;
+ * This program is distributed without any warranty.
  */
 
 #ifndef XORSHIFT_HASH_HPP
