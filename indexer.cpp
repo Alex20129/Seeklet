@@ -502,8 +502,8 @@ void Indexer::searchTest()
 	// query.append("office");
 	// query.append("business");
 	// query.append("suit");
-	query.append("hoodie");
-	//query.append("wedding");
+	// query.append("hoodie");
+	query.append("wedding");
 	//query.append("dress");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
