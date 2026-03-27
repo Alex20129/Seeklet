@@ -11,10 +11,10 @@
 class WebPageProcessor : public QObject
 {
 	Q_OBJECT
-	QWebEnginePage *mWebPage;
-	QWebEngineProfile *mProfile;
-	QWebEngineView *mWebViewWidget;
-	QTimer *mJSCompletionTimer;
+	QWebEnginePage *mWebPage=nullptr;
+	QWebEngineProfile *mProfile=nullptr;
+	QWebEngineView *mWebViewWidget=nullptr;
+	QTimer *mJSCompletionTimer=nullptr;
 	QString mPageContentHTML;
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;

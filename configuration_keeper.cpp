@@ -127,6 +127,24 @@ int ConfigurationKeeper::pagesPerSession() const
 	return mPagesPerSession;
 }
 
+void ConfigurationKeeper::setShowBrowserWindow(int show_browser_window)
+{
+	if(show_browser_window<0)
+	{
+		show_browser_window=0;
+	}
+	if(show_browser_window>2)
+	{
+		show_browser_window=2;
+	}
+	mShowBrowserWindow=show_browser_window;
+}
+
+int ConfigurationKeeper::showBrowserWindow() const
+{
+	return mShowBrowserWindow;
+}
+
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
 {
 	if(allowed_url_scheme.isEmpty())
@@ -292,6 +310,10 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	if(configJsonObject.value("pages_per_session").isDouble())
 	{
 		this->setPagesPerSession(configJsonObject.value("pages_per_session").toDouble());
+	}
+	if(configJsonObject.value("show_browser_window").isDouble())
+	{
+		this->setShowBrowserWindow(configJsonObject.value("show_browser_window").toDouble());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

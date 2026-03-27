@@ -116,14 +116,39 @@ void WebPageProcessor::extractPageLinks()
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
 	mWebViewWidget=new QWebEngineView();
-	mWebViewWidget->setWindowFlags(Qt::WindowType::Window | Qt::WindowType::BypassWindowManagerHint | Qt::WindowType::FramelessWindowHint);
-	mWebViewWidget->setAttribute(Qt::WidgetAttribute::WA_DontShowOnScreen);
 	setWindowSize(gSettings->crawlerWindowSize());
+	if(gSettings->showBrowserWindow()==0)
+	{
+		mWebViewWidget->setAttribute(Qt::WidgetAttribute::WA_DontShowOnScreen, true);
+		Qt::WindowFlags WebViewWidgetFlags=
+			Qt::WindowType::Window |
+			Qt::WindowType::FramelessWindowHint |
+			Qt::WindowType::BypassWindowManagerHint;
+		mWebViewWidget->setWindowFlags(WebViewWidgetFlags);
+	}
+	else if(gSettings->showBrowserWindow()==1)
+	{
+		Qt::WindowFlags WebViewWidgetFlags=
+			Qt::WindowType::Window |
+			Qt::WindowType::WindowTitleHint |
+			Qt::WindowType::WindowMinimizeButtonHint |
+			Qt::WindowType::WindowMaximizeButtonHint |
+			Qt::WindowType::WindowCloseButtonHint;
+		mWebViewWidget->setWindowFlags(WebViewWidgetFlags);
+		mWebViewWidget->showMaximized();
+	}
+	else
+	{
+		Qt::WindowFlags WebViewWidgetFlags=
+			Qt::WindowType::Window |
+			Qt::WindowType::FramelessWindowHint;
+		mWebViewWidget->setWindowFlags(WebViewWidgetFlags);
+		mWebViewWidget->showFullScreen();
+	}
 	mProfile=new QWebEngineProfile(this);
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
 	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
-	mWebPage=nullptr;
 	createNewWebPage();
 	mJSCompletionTimer=new QTimer(this);
 	mJSCompletionTimer->setSingleShot(1);
