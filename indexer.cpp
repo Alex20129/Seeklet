@@ -50,16 +50,7 @@ bool PageMetadata::isValid() const
 	return result;
 }
 
-Indexer::Indexer(QObject *parent) : QObject(parent)
-{
-	setDatabaseDirectory(gSettings->databaseDirectory());
-}
-
-Indexer::~Indexer()
-{
-	this->clear();
-}
-
+#ifndef NDEBUG
 void Indexer::printPageMetadata(const PageMetadata &page_md)
 {
 	qDebug() << "==[ page metadata ]==";
@@ -67,8 +58,8 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
 	qDebug() << "contentHash:"
-		<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
-		<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
+			<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
+			<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
 	qDebug() << "words:";
 	QHash<quint64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
@@ -78,6 +69,17 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 		const QString &word=mDictionaryLookupTable.value(wordHash);
 		qDebug() << word << wordTf;
 	}
+}
+#endif
+
+Indexer::Indexer(QObject *parent) : QObject(parent)
+{
+	setDatabaseDirectory(gSettings->databaseDirectory());
+}
+
+Indexer::~Indexer()
+{
+	this->clear();
 }
 
 void Indexer::clear()
@@ -237,8 +239,6 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 
 void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const QStringList &words) const
 {
-	uint64_t WIP; // TODO: Very slow implementation. Need to make it faster.
-
 	if(pages.isEmpty())
 	{
 		return;
@@ -247,34 +247,21 @@ void Indexer::sortPagesByTfIdfScore(QVector<const PageMetadata *> &pages, const 
 	{
 		return;
 	}
-
-	QVector<const PageMetadata *> pagesNewOrder;
-	pagesNewOrder.reserve(pages.size());
-
-	QVector<double> pageScores;
-	pageScores.reserve(pages.size());
-
+	qsizetype numOfPages=pages.size();
+	QVector<ScoredPage> scoredPages;
+	scoredPages.reserve(numOfPages);
 	for(const PageMetadata *page : pages)
 	{
-		double tfIdfScore=calculateTfIdfScore(page, words);
-		bool inserted=false;
-		for (int i=0; i < pageScores.size(); ++i)
-		{
-			if(tfIdfScore > pageScores.at(i))
-			{
-				pageScores.insert(i, tfIdfScore);
-				pagesNewOrder.insert(i, page);
-				inserted=true;
-				break;
-			}
-		}
-		if(!inserted)
-		{
-			pageScores.append(tfIdfScore);
-			pagesNewOrder.append(page);
-		}
+		double score=calculateTfIdfScore(page, words);
+		scoredPages.append({score, page});
 	}
-	pages=pagesNewOrder;
+	std::sort(scoredPages.begin(), scoredPages.end(), pageScoreComparator);
+	pages.clear();
+	pages.reserve(numOfPages);
+	for(const ScoredPage &sp : scoredPages)
+	{
+		pages.append(sp.page);
+	}
 }
 
 void Indexer::addPage(const PageMetadata &page_metadata)
@@ -501,10 +488,11 @@ void Indexer::searchTest()
 	QStringList query;
 	// query.append("office");
 	// query.append("business");
+	// query.append("grey");
 	// query.append("suit");
 	// query.append("hoodie");
 	query.append("wedding");
-	//query.append("dress");
+	query.append("dress");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))

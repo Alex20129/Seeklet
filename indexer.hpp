@@ -30,12 +30,21 @@ class Indexer : public QObject
 	QHash<Hash128, PageMetadata *> mIndexByContentHash;
 	QHash<Hash128, PageMetadata *> mIndexByUrlHash;
 	QString mDatabaseDirectory;
-public:
-	Indexer(QObject *parent = nullptr);
-	~Indexer();
+	struct ScoredPage
+	{
+		double score;
+		const PageMetadata *page;
+	};
+	static bool pageScoreComparator(const ScoredPage &a, const ScoredPage &b)
+	{
+		return(a.score > b.score);
+	};
 #ifndef NDEBUG
 	void printPageMetadata(const PageMetadata &page_md);
 #endif
+public:
+	Indexer(QObject *parent = nullptr);
+	~Indexer();
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
 	void merge(const Indexer &other);
