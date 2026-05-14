@@ -13,6 +13,20 @@ ConfigurationKeeper::~ConfigurationKeeper()
 {
 }
 
+void ConfigurationKeeper::setHttpCacheSize(int cache_size)
+{
+	if(cache_size<0)
+	{
+		cache_size=0;
+	}
+	mHttpCacheSize=cache_size;
+}
+
+int ConfigurationKeeper::httpCacheSize() const
+{
+	return mHttpCacheSize;
+}
+
 void ConfigurationKeeper::setHttpUserAgent(const QString &user_agent)
 {
 	mHttpUserAgent=user_agent;

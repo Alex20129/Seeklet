@@ -19,14 +19,15 @@ void WebPageProcessor::createNewWebPage()
 {
 	QWebEnginePage *oldWebPage=mWebPage;
 	QWebEnginePage *newWebPage=new QWebEnginePage(mProfile, this);
-	mWebViewWidget->setPage(newWebPage);
 	connect(newWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
+	disconnect(oldWebPage, nullptr, nullptr, nullptr);
+	mWebViewWidget->setPage(newWebPage);
 	mWebPage=newWebPage;
-	if(oldWebPage)
+	if(oldWebPage->isLoading())
 	{
-		disconnect(oldWebPage, nullptr, nullptr, nullptr);
-		oldWebPage->deleteLater();
+		oldWebPage->triggerAction(QWebEnginePage::WebAction::Stop);
 	}
+	oldWebPage->deleteLater();
 }
 
 void WebPageProcessor::waitForJSToFinish(bool ok)
@@ -115,7 +116,14 @@ void WebPageProcessor::extractPageLinks()
 
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
+	mProfile=new QWebEngineProfile(this);
+	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
+	mProfile->setHttpCacheMaximumSize(gSettings->httpCacheSize());
+	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
+	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
+	mWebPage=new QWebEnginePage(mProfile, this);
 	mWebViewWidget=new QWebEngineView();
+	mWebViewWidget->setPage(mWebPage);
 	setWindowSize(gSettings->crawlerWindowSize());
 	if(gSettings->showBrowserWindow()==0)
 	{
@@ -145,16 +153,30 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 		mWebViewWidget->setWindowFlags(WebViewWidgetFlags);
 		mWebViewWidget->showFullScreen();
 	}
-	mProfile=new QWebEngineProfile(this);
-	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
-	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
-	createNewWebPage();
 	mJSCompletionTimer=new QTimer(this);
 	mJSCompletionTimer->setSingleShot(1);
+	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
+}
+
+void WebPageProcessor::setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type)
+{
+	if(mProfile->httpCacheType()!=cache_type)
+	{
+		mProfile->setHttpCacheType(cache_type);
+		createNewWebPage();
+	}
+}
+
+void WebPageProcessor::setHttpCacheSize(int cache_size)
+{
+	if(mProfile->httpCacheMaximumSize()!=cache_size)
+	{
+		mProfile->setHttpCacheMaximumSize(cache_size);
+		createNewWebPage();
+	}
 }
 
 void WebPageProcessor::setHttpUserAgent(const QString &user_agent)

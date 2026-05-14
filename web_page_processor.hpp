@@ -26,6 +26,8 @@ private slots:
 	void extractPageLinks();
 public:
 	WebPageProcessor(QObject *parent=nullptr);
+	void setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type);
+	void setHttpCacheSize(int cache_size);
 	void setHttpUserAgent(const QString &user_agent);
 	void setWindowSize(const QSize &window_size);
 	void loadCookiesFromFirefoxProfile(const QString &path_to_file);

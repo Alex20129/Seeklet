@@ -14,6 +14,7 @@ class ConfigurationKeeper : public QObject
 	QString mDatabaseDirectory;
 	QString mFireFoxProfileDirectory;
 	QSize mCrawlerWindowSize;
+	int mHttpCacheSize;
 	int mJsCompletionTimeout;
 	int mPageLoadingIntervalMin;
 	int mPageLoadingIntervalMax;
@@ -26,6 +27,9 @@ class ConfigurationKeeper : public QObject
 public:
 	ConfigurationKeeper(QObject *parent=nullptr);
 	~ConfigurationKeeper();
+
+	void setHttpCacheSize(int cache_size);
+	int httpCacheSize() const;
 
 	void setHttpUserAgent(const QString &http_user_agent);
 	const QString &httpUserAgent() const;
