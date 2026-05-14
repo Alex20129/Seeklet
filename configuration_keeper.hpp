@@ -24,7 +24,7 @@ class ConfigurationKeeper : public QObject
 	QSet<QString> mBlacklistedHosts;
 	QHash<QString, QStringList> mCrawlingZones;
 public:
-	ConfigurationKeeper(QObject *parent = nullptr);
+	ConfigurationKeeper(QObject *parent=nullptr);
 	~ConfigurationKeeper();
 
 	void setHttpUserAgent(const QString &http_user_agent);

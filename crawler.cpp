@@ -14,7 +14,7 @@ QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 	static const QRegularExpression wordsRegex("[^a-zа-яё]+");
 	static const QRegularExpression digitsRegex("^[0-9]+$");
 	QMap<QString, quint64> wordMap;
-	const QStringList words = lowerText.split(wordsRegex, Qt::SkipEmptyParts);
+	const QStringList words=lowerText.split(wordsRegex, Qt::SkipEmptyParts);
 	for (const QString &word : words)
 	{
 		if (word.length()>2 && word.length()<33)
@@ -73,7 +73,7 @@ void Crawler::loadNextPage()
 		emit finished();
 		return;
 	}
-	QUrl nextURL = mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
+	QUrl nextURL=mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
 	mWebPageProcessor->loadPage(nextURL);
@@ -83,22 +83,22 @@ void Crawler::onPageProcessingFinished()
 {
 	qDebug("Crawler::onPageProcessingFinished");
 
-	const QString &pageContentText = mWebPageProcessor->getPageContentAsTEXT();
-	const QString &pageContentHtml = mWebPageProcessor->getPageContentAsHTML();
-	const QList<QUrl> &pageLinksList = mWebPageProcessor->getPageLinks();
+	const QString &pageContentText=mWebPageProcessor->getPageContentAsTEXT();
+	const QString &pageContentHtml=mWebPageProcessor->getPageContentAsHTML();
+	const QList<QUrl> &pageLinksList=mWebPageProcessor->getPageLinks();
 	PageMetadata pageMetadata;
 
-	pageMetadata.timeStamp = QDateTime::currentDateTime();
-	pageMetadata.title = mWebPageProcessor->getPageTitle();
-	pageMetadata.url = mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
-	pageMetadata.contentHash = xorshiftstar_hash_128(pageContentHtml.toUtf8());
+	pageMetadata.timeStamp=QDateTime::currentDateTime();
+	pageMetadata.title=mWebPageProcessor->getPageTitle();
+	pageMetadata.url=mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
+	pageMetadata.contentHash=xorshiftstar_hash_128(pageContentHtml.toUtf8());
 
-	Hash128 urlHash = xorshiftstar_hash_128(pageMetadata.url);
+	Hash128 urlHash=xorshiftstar_hash_128(pageMetadata.url);
 	mVisitedURLsHashes.insert(urlHash);
 
 	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
-	QMap<QString, quint64> pageWords = ExtractAndCountWords(pageContentText);
+	QMap<QString, quint64> pageWords=ExtractAndCountWords(pageContentText);
 	QMap<QString, quint64>::ConstIterator pageWordsIt;
 	for(pageWordsIt=pageWords.constBegin(); pageWordsIt!=pageWords.constEnd(); pageWordsIt++)
 	{
@@ -143,7 +143,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
-	Hash128 urlHash = xorshiftstar_hash_128(urlAdjusted.toEncoded());
+	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;

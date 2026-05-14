@@ -46,7 +46,7 @@ void WebPageProcessor::extractPageContentTEXT()
 	mWebPage->toPlainText(
 		[this](const QString &text)
 		{
-			this->mPageContentTEXT = text;
+			this->mPageContentTEXT=text;
 			if(!this->mPageContentHTML.isEmpty())
 			{
 				emit pageLoadingSuccess();
@@ -59,7 +59,7 @@ void WebPageProcessor::extractPageContentHTML()
 	mWebPage->toHtml(
 		[this](const QString &html)
 		{
-			this->mPageContentHTML = html;
+			this->mPageContentHTML=html;
 			if(!this->mPageContentTEXT.isEmpty())
 			{
 				emit pageLoadingSuccess();
@@ -85,7 +85,7 @@ void WebPageProcessor::extractPageLinks()
 			else
 			{
 				domNode.parseAttributes();
-				std::pair<bool, std::string> href_pair = domNode.attribute("href");
+				std::pair<bool, std::string> href_pair=domNode.attribute("href");
 				if (href_pair.first)
 				{
 					QString hrefQString=QString::fromStdString(href_pair.second);
@@ -185,9 +185,9 @@ void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file
 		return;
 	}
 	QSettings settings(path_to_file, QSettings::IniFormat);
-	QStringList profiles = settings.childGroups();
+	QStringList profiles=settings.childGroups();
 	QFileInfo iniFile(path_to_file);
-	QDir profilesDir = iniFile.absoluteDir();
+	QDir profilesDir=iniFile.absoluteDir();
 	QString profilePath;
 	for (const QString &group : profiles)
 	{
@@ -196,13 +196,13 @@ void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file
 			settings.beginGroup(group);
 			if (settings.contains("Default") && settings.value("Default").toInt() == 1)
 			{
-				profilePath = settings.value("Path").toString();
+				profilePath=settings.value("Path").toString();
 				settings.endGroup();
 				break;
 			}
 			if (profilePath.isEmpty())
 			{
-				profilePath = settings.value("Path").toString();
+				profilePath=settings.value("Path").toString();
 			}
 			settings.endGroup();
 		}
@@ -211,7 +211,7 @@ void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file
 	{
 		return;
 	}
-	QString cookiesFilePath = profilesDir.absoluteFilePath(profilePath + "/cookies.sqlite");
+	QString cookiesFilePath=profilesDir.absoluteFilePath(profilePath + "/cookies.sqlite");
 	if (!QFile::exists(cookiesFilePath))
 	{
 		return;
@@ -223,7 +223,7 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 {
 	QList<QNetworkCookie> cookies;
 	{
-		QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "firefox_cookies");
+		QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE", "firefox_cookies");
 		db.setDatabaseName(path_to_file);
 		if (db.open())
 		{
@@ -232,12 +232,12 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 			{
 				while (query.next())
 				{
-					QString host = query.value("host").toString();
-					QString path = query.value("path").toString();
-					bool isSecure = query.value("isSecure").toBool();
-					qint64 expiry = query.value("expiry").toLongLong();
-					QString name = query.value("name").toString();
-					QString value = query.value("value").toString();
+					QString host=query.value("host").toString();
+					QString path=query.value("path").toString();
+					bool isSecure=query.value("isSecure").toBool();
+					qint64 expiry=query.value("expiry").toLongLong();
+					QString name=query.value("name").toString();
+					QString value=query.value("value").toString();
 					if (expiry != 0 && expiry < QDateTime::currentSecsSinceEpoch())
 					{
 						continue;

@@ -261,7 +261,7 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	configFile.close();
 
 	QJsonParseError err;
-	QJsonDocument configJsonDoc = QJsonDocument::fromJson(configData, &err);
+	QJsonDocument configJsonDoc=QJsonDocument::fromJson(configData, &err);
 
 	if (err.error != QJsonParseError::NoError)
 	{
@@ -273,7 +273,7 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 		return;
 	}
 
-	QJsonObject configJsonObject = configJsonDoc.object();
+	QJsonObject configJsonObject=configJsonDoc.object();
 
 	if(configJsonObject.value("http_user_agent").isString())
 	{

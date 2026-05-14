@@ -43,7 +43,7 @@ class Indexer : public QObject
 	void printPageMetadata(const PageMetadata &page_md);
 #endif
 public:
-	Indexer(QObject *parent = nullptr);
+	Indexer(QObject *parent=nullptr);
 	~Indexer();
 	void clear();
 	void setDatabaseDirectory(const QString &database_directory);
