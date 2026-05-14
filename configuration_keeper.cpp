@@ -289,6 +289,10 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 
 	QJsonObject configJsonObject=configJsonDoc.object();
 
+	if(configJsonObject.value("http_cache_size").isDouble())
+	{
+		this->setHttpCacheSize(configJsonObject.value("http_cache_size").toInt());
+	}
 	if(configJsonObject.value("http_user_agent").isString())
 	{
 		this->setHttpUserAgent(configJsonObject.value("http_user_agent").toString());
