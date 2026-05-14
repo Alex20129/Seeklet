@@ -27,10 +27,10 @@ OpenDHT
 + Indexing
 + Local index database: saving, loading
 + Basic search functionality: keyword search, TF-IDF
++ Multithreaded crawling
 + GUI
 + Configuration management
-+ Multithreaded crawling
 + Basic P2P functionality: internode communication, search request propagation
 + Distributed index database: replication, merging, cross-validation
 + Extended search functionality: ranking, filtering, refining, image search
-+ Extended P2P functionality: peer announce and discovery (OpenDHT / DHTNet), web of trust, node ratings, anonymization mechanism
++ Extended P2P functionality: node bootstrapping, peer announce and discovery (OpenDHT / DHTNet), web of trust, node ratings, anonymization mechanism
