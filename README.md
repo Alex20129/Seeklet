@@ -10,10 +10,6 @@ Qt WebEngine
 
 `apt install qt6-webengine-dev`
 
-Jansson
-
-`apt install libjansson-dev`
-
 HTMLcxx
 
 `apt install libhtmlcxx-dev`

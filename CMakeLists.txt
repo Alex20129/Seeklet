@@ -19,7 +19,7 @@ LINK_LIBRARIES("${OPENSSL_LIBRARIES}")
 FIND_PACKAGE(Qt6 COMPONENTS Core Network Sql WebEngineCore WebEngineWidgets REQUIRED)
 LINK_LIBRARIES(Qt6::Core Qt6::Network Qt6::Sql Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
-LINK_LIBRARIES(jansson htmlcxx)
+LINK_LIBRARIES(htmlcxx)
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
 	main.hpp
