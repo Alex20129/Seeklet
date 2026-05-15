@@ -126,7 +126,7 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mWebPage=new QWebEnginePage(mProfile, this);
 	mWebViewWidget=new QWebEngineView();
 	mWebViewWidget->setPage(mWebPage);
-	setWindowSize(gSettings->crawlerWindowSize());
+	setWindowSize(gSettings->windowSize());
 	if(gSettings->showBrowserWindow()==0)
 	{
 		mWebViewWidget->setAttribute(Qt::WidgetAttribute::WA_DontShowOnScreen, true);
@@ -206,13 +206,17 @@ void WebPageProcessor::setLoadImages(int load_images)
 
 void WebPageProcessor::setWindowSize(const QSize &window_size)
 {
-	if(window_size.width()>0 && window_size.height()>0)
+	if(mWebViewWidget->size()!=window_size)
 	{
-		mWebViewWidget->resize(window_size);
-	}
-	else
-	{
-		mWebViewWidget->resize(mWebViewWidget->screen()->size());
+		if(window_size.width()>0 && window_size.height()>0)
+		{
+			mWebViewWidget->resize(window_size);
+		}
+		else
+		{
+			mWebViewWidget->resize(mWebViewWidget->screen()->size());
+		}
+		gSettings->setWindowSize(window_size);
 	}
 }
 

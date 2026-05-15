@@ -350,7 +350,7 @@ void Indexer::save()
 	QFile dltFile(dltFilePath);
 	if(dltFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
-		quint64 dltSize=mDictionaryLookupTable.size();
+		qsizetype dltSize=mDictionaryLookupTable.size();
 		QDataStream dltFileStream(&dltFile);
 		dltFileStream.setVersion(QDataStream::Qt_6_0);
 		dltFileStream << dataStreamVersion;
@@ -367,7 +367,7 @@ void Indexer::save()
 	QFile mdFile(mdFilePath);
 	if(mdFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
 	{
-		quint64 numOfPages=mIndexByContentHash.size();
+		qsizetype numOfPages=mIndexByContentHash.size();
 		QDataStream mdFileStream(&mdFile);
 		mdFileStream.setVersion(QDataStream::Qt_6_0);
 		mdFileStream << dataStreamVersion;
@@ -408,7 +408,7 @@ void Indexer::load()
 	QFile dltFile(dltFilePath);
 	if(dltFile.open(QIODevice::ReadOnly))
 	{
-		quint64 dltSize;
+		qsizetype dltSize;
 		QDataStream dltFileStream(&dltFile);
 		dltFileStream.setVersion(QDataStream::Qt_6_0);
 		dltFileStream >> dataStreamVersion;
@@ -437,7 +437,7 @@ void Indexer::load()
 	QFile mdFile(mdFilePath);
 	if(mdFile.open(QIODevice::ReadOnly))
 	{
-		quint64 numOfPages;
+		qsizetype numOfPages;
 		QDataStream mdFileStream(&mdFile);
 		mdFileStream.setVersion(QDataStream::Qt_6_0);
 		mdFileStream >> dataStreamVersion;
@@ -446,13 +446,13 @@ void Indexer::load()
 			mdFileStream >> numOfPages;
 			mIndexByContentHash.reserve(numOfPages);
 			mIndexByUrlHash.reserve(numOfPages);
-			for(quint64 page=0; page<numOfPages; page++)
+			for(qsizetype page=0; page<numOfPages; page++)
 			{
 				PageMetadata newPageMetadata;
 				newPageMetadata.readFromStream(mdFileStream);
 				addPage(newPageMetadata);
 			}
-			if(mIndexByContentHash.size()==(qsizetype)numOfPages)
+			if(mIndexByContentHash.size()==numOfPages)
 			{
 				qInfo() << "Metadata has been loaded successfully:" << mIndexByContentHash.size() << "new records.";
 			}

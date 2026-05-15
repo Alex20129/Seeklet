@@ -41,10 +41,10 @@ public:
 	void setFireFoxProfileDirectory(const QString &firefox_profile_directory);
 	const QString &fireFoxProfileDirectory() const;
 
-	void setCrawlerWindowWidth(int crawler_window_width);
-	void setCrawlerWindowHeight(int crawler_window_height);
-	void setCrawlerWindowSize(const QSize &crawler_window_size);
-	const QSize &crawlerWindowSize() const;
+	void setWindowWidth(int window_width);
+	void setWindowHeight(int window_height);
+	void setWindowSize(QSize window_size);
+	const QSize &windowSize() const;
 
 	void setJsCompletionTimeout(int js_completion_timeout);
 	int jsCompletionTimeout() const;

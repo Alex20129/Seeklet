@@ -57,22 +57,38 @@ const QString &ConfigurationKeeper::fireFoxProfileDirectory() const
 	return mFireFoxProfileDirectory;
 }
 
-void ConfigurationKeeper::setCrawlerWindowWidth(int crawler_window_width)
+void ConfigurationKeeper::setWindowWidth(int window_width)
 {
-	mCrawlerWindowSize.setWidth(crawler_window_width);
+	if(window_width<0)
+	{
+		window_width=0;
+	}
+	mCrawlerWindowSize.setWidth(window_width);
 }
 
-void ConfigurationKeeper::setCrawlerWindowHeight(int crawler_window_height)
+void ConfigurationKeeper::setWindowHeight(int window_height)
 {
-	mCrawlerWindowSize.setHeight(crawler_window_height);
+	if(window_height<0)
+	{
+		window_height=0;
+	}
+	mCrawlerWindowSize.setHeight(window_height);
 }
 
-void ConfigurationKeeper::setCrawlerWindowSize(const QSize &crawler_window_size)
+void ConfigurationKeeper::setWindowSize(QSize window_size)
 {
-	mCrawlerWindowSize=crawler_window_size;
+	if(window_size.width()<0)
+	{
+		window_size.setWidth(0);
+	}
+	if(window_size.height()<0)
+	{
+		window_size.setHeight(0);
+	}
+	mCrawlerWindowSize=window_size;
 }
 
-const QSize &ConfigurationKeeper::crawlerWindowSize() const
+const QSize &ConfigurationKeeper::windowSize() const
 {
 	return mCrawlerWindowSize;
 }
@@ -323,13 +339,13 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		this->setFireFoxProfileDirectory(configJsonObject.value("firefox_profile_directory").toString());
 	}
-	if(configJsonObject.value("crawler_window_width").isDouble())
+	if(configJsonObject.value("window_width").isDouble())
 	{
-		this->setCrawlerWindowWidth(configJsonObject.value("crawler_window_width").toDouble());
+		this->setWindowWidth(configJsonObject.value("window_width").toInt());
 	}
-	if(configJsonObject.value("crawler_window_height").isDouble())
+	if(configJsonObject.value("window_height").isDouble())
 	{
-		this->setCrawlerWindowHeight(configJsonObject.value("crawler_window_height").toDouble());
+		this->setWindowHeight(configJsonObject.value("window_height").toInt());
 	}
 	if(configJsonObject.value("js_completion_timeout").isDouble())
 	{
