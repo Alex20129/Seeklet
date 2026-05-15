@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QNetworkCookie>
 #include <QWebEngineCookieStore>
+#include <QWebEngineSettings>
 #include <QFileInfo>
 #include <QSettings>
 #include <QDir>
@@ -121,6 +122,7 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile->setHttpCacheMaximumSize(gSettings->httpCacheSize());
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
 	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
+	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
 	mWebPage=new QWebEnginePage(mProfile, this);
 	mWebViewWidget=new QWebEngineView();
 	mWebViewWidget->setPage(mWebPage);
@@ -166,6 +168,8 @@ void WebPageProcessor::setHttpCacheType(QWebEngineProfile::HttpCacheType cache_t
 	if(mProfile->httpCacheType()!=cache_type)
 	{
 		mProfile->setHttpCacheType(cache_type);
+		uint64_t WIP;
+		// gSettings->setHttpCacheType(cache_type);
 		createNewWebPage();
 	}
 }
@@ -175,6 +179,7 @@ void WebPageProcessor::setHttpCacheSize(int cache_size)
 	if(mProfile->httpCacheMaximumSize()!=cache_size)
 	{
 		mProfile->setHttpCacheMaximumSize(cache_size);
+		gSettings->setHttpCacheSize(cache_size);
 		createNewWebPage();
 	}
 }
@@ -184,6 +189,17 @@ void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 	if(mProfile->httpUserAgent()!=user_agent)
 	{
 		mProfile->setHttpUserAgent(user_agent);
+		gSettings->setHttpUserAgent(user_agent);
+		createNewWebPage();
+	}
+}
+
+void WebPageProcessor::setLoadImages(int load_images)
+{
+	if(mProfile->settings()->testAttribute(QWebEngineSettings::AutoLoadImages)!=load_images)
+	{
+		mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, load_images);
+		gSettings->setLoadImages(load_images);
 		createNewWebPage();
 	}
 }

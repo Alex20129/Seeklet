@@ -147,7 +147,7 @@ void ConfigurationKeeper::setShowBrowserWindow(int show_browser_window)
 	{
 		show_browser_window=0;
 	}
-	if(show_browser_window>2)
+	else if(show_browser_window>2)
 	{
 		show_browser_window=2;
 	}
@@ -157,6 +157,24 @@ void ConfigurationKeeper::setShowBrowserWindow(int show_browser_window)
 int ConfigurationKeeper::showBrowserWindow() const
 {
 	return mShowBrowserWindow;
+}
+
+void ConfigurationKeeper::setLoadImages(int load_images)
+{
+	if(load_images)
+	{
+		load_images=1;
+	}
+	else
+	{
+		load_images=0;
+	}
+	mLoadImages=load_images;
+}
+
+int ConfigurationKeeper::loadImages() const
+{
+	return mLoadImages;
 }
 
 void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
@@ -327,11 +345,15 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	}
 	if(configJsonObject.value("pages_per_session").isDouble())
 	{
-		this->setPagesPerSession(configJsonObject.value("pages_per_session").toDouble());
+		this->setPagesPerSession(configJsonObject.value("pages_per_session").toInt());
 	}
 	if(configJsonObject.value("show_browser_window").isDouble())
 	{
-		this->setShowBrowserWindow(configJsonObject.value("show_browser_window").toDouble());
+		this->setShowBrowserWindow(configJsonObject.value("show_browser_window").toInt());
+	}
+	if(configJsonObject.value("load_images").isDouble())
+	{
+		this->setLoadImages(configJsonObject.value("load_images").toInt());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

@@ -10,6 +10,7 @@
 	"page_loading_interval_max":8000,
 	"pages_per_session":500,
 	"show_browser_window":0,
+	"load_images":1,
 	"start_urls":
 	[
 		"https://stackoverflow.com/questions/tagged/linux",

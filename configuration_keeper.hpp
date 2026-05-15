@@ -20,6 +20,7 @@ class ConfigurationKeeper : public QObject
 	int mPageLoadingIntervalMax;
 	int mPagesPerSession;
 	int mShowBrowserWindow;
+	int mLoadImages;
 	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
 	QSet<QString> mBlacklistedHosts;
@@ -59,6 +60,9 @@ public:
 
 	void setShowBrowserWindow(int show_browser_window);
 	int showBrowserWindow() const;
+
+	void setLoadImages(int load_images);
+	int loadImages() const;
 
 	void addAllowedUrlScheme(const QString &allowed_url_scheme);
 	void removeAllowedUrlScheme(const QString &allowed_url_scheme);

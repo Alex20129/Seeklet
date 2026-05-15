@@ -29,6 +29,7 @@ public:
 	void setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type);
 	void setHttpCacheSize(int cache_size);
 	void setHttpUserAgent(const QString &user_agent);
+	void setLoadImages(int load_images);
 	void setWindowSize(const QSize &window_size);
 	void loadCookiesFromFirefoxProfile(const QString &path_to_file);
 	void loadCookiesFromFirefoxDB(const QString &path_to_file);

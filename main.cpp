@@ -18,7 +18,6 @@ int main(int argc, char **argv)
 	QObject::connect(myCrawler, &Crawler::needToAddPage, myIndexer, &Indexer::addPage);
 	QObject::connect(myCrawler, &Crawler::needToAddWord, myIndexer, &Indexer::addWord);
 	QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::save);
-	// QObject::connect(myCrawler, &Crawler::finished, myIndexer, &Indexer::searchTest);
 	QObject::connect(myCrawler, &Crawler::finished, &seekletApp, &QCoreApplication::quit);
 
 	QTimer::singleShot(0, myIndexer, &Indexer::load);
