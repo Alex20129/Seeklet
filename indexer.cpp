@@ -3,11 +3,6 @@
 #include "indexer.hpp"
 #include "xorshift_hash.hpp"
 
-PageMetadata::PageMetadata()
-{
-	wordsTotal=0;
-}
-
 void PageMetadata::writeToStream(QDataStream &stream) const
 {
 	stream << this->title;

@@ -15,8 +15,7 @@ struct PageMetadata
 	QDateTime timeStamp;
 	QHash<quint64, quint64> wordsAsHashes;
 	Hash128 contentHash;
-	quint64 wordsTotal;
-	PageMetadata();
+	quint64 wordsTotal=0;
 	void writeToStream(QDataStream &stream) const;
 	void readFromStream(QDataStream &stream);
 	bool isValid() const;
