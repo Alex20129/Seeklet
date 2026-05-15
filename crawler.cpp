@@ -106,7 +106,7 @@ void Crawler::onPageProcessingFinished()
 		quint64 wordTf=pageWordsIt.value();
 		if(wordTf>0 && !pageWord.isEmpty())
 		{
-			quint64 wordHash=xorshiftstar_hash_64(pageWord.toUtf8());
+			Hash64 wordHash=xorshiftstar_hash_64(pageWord.toUtf8());
 			pageMetadata.wordsAsHashes.insert(wordHash, wordTf);
 			pageMetadata.wordsTotal+=wordTf;
 			emit needToAddWord(pageWord);

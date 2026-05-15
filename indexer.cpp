@@ -25,24 +25,23 @@ void PageMetadata::readFromStream(QDataStream &stream)
 
 bool PageMetadata::isValid() const
 {
-	bool result=true;
 	if(wordsTotal==0)
 	{
-		result=false;
+		return(false);
 	}
 	if(wordsAsHashes.isEmpty())
 	{
-		result=false;
+		return(false);
 	}
 	if(url.isEmpty())
 	{
-		result=false;
+		return(false);
 	}
 	if(!timeStamp.isValid())
 	{
-		result=false;
+		return(false);
 	}
-	return result;
+	return(true);
 }
 
 #ifndef NDEBUG
@@ -56,10 +55,10 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 			<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
 			<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
 	qDebug() << "words:";
-	QHash<quint64, quint64>::const_iterator pageTfIt;
+	QHash<Hash64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
 	{
-		quint64 wordHash=pageTfIt.key();
+		Hash64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
 		const QString &word=mDictionaryLookupTable.value(wordHash);
 		qDebug() << word << wordTf;
@@ -140,7 +139,7 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	qsizetype smallestSetSize=LONG_LONG_MAX;
 	for(const QString &word : words)
 	{
-		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
+		Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 		if(!mTableOfContents.contains(wordHash))
 		{
 			return searchResults;
@@ -156,7 +155,7 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	QSet<Hash128> pageSubsetIntersection=mTableOfContents[smallestSetKey];
 	for(const QString &word : words)
 	{
-		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
+		Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 		const QSet<Hash128> &pageSubset=mTableOfContents[wordHash];
 		pageSubsetIntersection.intersect(pageSubset);
 		if(pageSubsetIntersection.isEmpty())
@@ -210,7 +209,7 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 		return 0.0;
 	}
 	double pageWordsTotal=page->wordsTotal;
-	quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
+	Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 	if(page->wordsAsHashes.value(wordHash, 0)==0)
 	{
 		return 0.0;
@@ -269,10 +268,10 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	{
 		return;
 	}
-	QHash<quint64, quint64>::const_iterator pageTfIt;
+	QHash<Hash64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_metadata.wordsAsHashes.constBegin(); pageTfIt != page_metadata.wordsAsHashes.constEnd(); pageTfIt++)
 	{
-		quint64 wordHash=pageTfIt.key();
+		Hash64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
 		if(mDictionaryLookupTable.contains(wordHash) && wordTf>0)
 		{
@@ -292,7 +291,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	}
 	for(pageTfIt=newPageMetaData->wordsAsHashes.constBegin(); pageTfIt != newPageMetaData->wordsAsHashes.constEnd(); pageTfIt++)
 	{
-		quint64 wordHash=pageTfIt.key();
+		Hash64 wordHash=pageTfIt.key();
 		mTableOfContents[wordHash].insert(newPageMetaData->contentHash);
 	}
 	mIndexByUrlHash.insert(urlHash, newPageMetaData);
@@ -309,11 +308,11 @@ void Indexer::deletePage(PageMetadata *page_metadata)
 	Hash128 urlHash=xorshiftstar_hash_128(page_metadata->url);
 	mIndexByContentHash.remove(contentHash);
 	mIndexByUrlHash.remove(urlHash);
-	QHash<quint64, quint64>::const_iterator wordHashIt;
+	QHash<Hash64, quint64>::const_iterator wordHashIt;
 	for(wordHashIt=page_metadata->wordsAsHashes.constBegin(); wordHashIt != page_metadata->wordsAsHashes.constEnd(); wordHashIt++)
 	{
-		quint64 wordHash=wordHashIt.key();
-		QHash<quint64, QSet<Hash128>>::iterator tocIt=mTableOfContents.find(wordHash);
+		Hash64 wordHash=wordHashIt.key();
+		QHash<Hash64, QSet<Hash128>>::iterator tocIt=mTableOfContents.find(wordHash);
 		if(tocIt != mTableOfContents.end())
 		{
 			tocIt.value().remove(contentHash);
@@ -330,7 +329,7 @@ void Indexer::addWord(const QString &word)
 {
 	if(!word.isEmpty())
 	{
-		quint64 wordHash=xorshiftstar_hash_64(word.toUtf8());
+		Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
 		mDictionaryLookupTable.insert(wordHash, word);
 	}
 }

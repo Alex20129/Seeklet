@@ -7,13 +7,14 @@
 #include <QDataStream>
 
 typedef QPair<quint64, quint64> Hash128;
+typedef quint64 Hash64;
 
 struct PageMetadata
 {
 	QString title;
 	QByteArray url;
 	QDateTime timeStamp;
-	QHash<quint64, quint64> wordsAsHashes;
+	QHash<Hash64, quint64> wordsAsHashes;
 	Hash128 contentHash;
 	quint64 wordsTotal=0;
 	void writeToStream(QDataStream &stream) const;
@@ -24,8 +25,8 @@ struct PageMetadata
 class Indexer : public QObject
 {
 	Q_OBJECT
-	QHash<quint64, QString> mDictionaryLookupTable;
-	QHash<quint64, QSet<Hash128>> mTableOfContents;
+	QHash<Hash64, QString> mDictionaryLookupTable;
+	QHash<Hash64, QSet<Hash128>> mTableOfContents;
 	QHash<Hash128, PageMetadata *> mIndexByContentHash;
 	QHash<Hash128, PageMetadata *> mIndexByUrlHash;
 	QString mDatabaseDirectory;
