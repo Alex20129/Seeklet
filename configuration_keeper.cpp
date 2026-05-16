@@ -4,15 +4,6 @@
 #include <QJsonArray>
 #include "configuration_keeper.hpp"
 
-ConfigurationKeeper::ConfigurationKeeper(QObject *parent) : QObject(parent)
-{
-	uint64_t WIP; // TODO: default settings
-}
-
-ConfigurationKeeper::~ConfigurationKeeper()
-{
-}
-
 void ConfigurationKeeper::setHttpCacheSize(int cache_size)
 {
 	if(cache_size<0)
@@ -175,20 +166,40 @@ int ConfigurationKeeper::showBrowserWindow() const
 	return mShowBrowserWindow;
 }
 
-void ConfigurationKeeper::setLoadImages(int load_images)
+void ConfigurationKeeper::setRemoteDebuggingPort(int remote_debugging_port)
 {
-	if(load_images)
+	if(remote_debugging_port<0)
 	{
-		load_images=1;
+		remote_debugging_port=0;
 	}
-	else
+	else if(remote_debugging_port>65535)
 	{
-		load_images=0;
+		remote_debugging_port=65535;
 	}
+	mRemoteDebuggingPort=remote_debugging_port;
+}
+
+int ConfigurationKeeper::remoteDebuggingPort() const
+{
+	return mRemoteDebuggingPort;
+}
+
+void ConfigurationKeeper::setRemoteDebuggingEnabled(bool remote_debugging_enabled)
+{
+	mRemoteDebuggingEnabled=remote_debugging_enabled;
+}
+
+bool ConfigurationKeeper::remoteDebuggingEnabled() const
+{
+	return mRemoteDebuggingEnabled;
+}
+
+void ConfigurationKeeper::setLoadImages(bool load_images)
+{
 	mLoadImages=load_images;
 }
 
-int ConfigurationKeeper::loadImages() const
+bool ConfigurationKeeper::loadImages() const
 {
 	return mLoadImages;
 }
@@ -367,9 +378,17 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		this->setShowBrowserWindow(configJsonObject.value("show_browser_window").toInt());
 	}
-	if(configJsonObject.value("load_images").isDouble())
+	if(configJsonObject.value("remote_debugging_port").isDouble())
 	{
-		this->setLoadImages(configJsonObject.value("load_images").toInt());
+		this->setRemoteDebuggingPort(configJsonObject.value("remote_debugging_port").toInt());
+	}
+	if(configJsonObject.value("remote_debugging_enabled").isBool())
+	{
+		this->setRemoteDebuggingEnabled(configJsonObject.value("remote_debugging_enabled").toBool());
+	}
+	if(configJsonObject.value("load_images").isBool())
+	{
+		this->setLoadImages(configJsonObject.value("load_images").toBool());
 	}
 
 	if(configJsonObject.value("allowed_url_schemes").isArray())

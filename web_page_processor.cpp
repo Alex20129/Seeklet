@@ -194,7 +194,7 @@ void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 	}
 }
 
-void WebPageProcessor::setLoadImages(int load_images)
+void WebPageProcessor::setLoadImages(bool load_images)
 {
 	if(mProfile->settings()->testAttribute(QWebEngineSettings::AutoLoadImages)!=load_images)
 	{
@@ -204,7 +204,7 @@ void WebPageProcessor::setLoadImages(int load_images)
 	}
 }
 
-void WebPageProcessor::setWindowSize(const QSize &window_size)
+void WebPageProcessor::setWindowSize(QSize window_size)
 {
 	if(mWebViewWidget->size()!=window_size)
 	{

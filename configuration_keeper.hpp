@@ -1,34 +1,32 @@
 #ifndef CONFIGURATION_KEEPER_HPP
 #define CONFIGURATION_KEEPER_HPP
 
-#include <QObject>
 #include <QSize>
-#include <QStringList>
 #include <QHash>
 #include <QSet>
+#include <QUrl>
 
-class ConfigurationKeeper : public QObject
+class ConfigurationKeeper
 {
-	Q_OBJECT
 	QString mHttpUserAgent;
 	QString mDatabaseDirectory;
 	QString mFireFoxProfileDirectory;
 	QSize mCrawlerWindowSize;
-	int mHttpCacheSize;
-	int mJsCompletionTimeout;
-	int mPageLoadingIntervalMin;
-	int mPageLoadingIntervalMax;
-	int mPagesPerSession;
-	int mShowBrowserWindow;
-	int mLoadImages;
+	int mHttpCacheSize=0;
+	int mJsCompletionTimeout=3000;
+	int mPageLoadingIntervalMin=4000;
+	int mPageLoadingIntervalMax=8000;
+	int mPagesPerSession=100;
+	int mShowBrowserWindow=0;
+	int mRemoteDebuggingPort=9222;
+	bool mRemoteDebuggingEnabled=false;
+	bool mLoadImages=true;
 	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
 	QSet<QString> mBlacklistedHosts;
 	QHash<QString, QStringList> mCrawlingZones;
-public:
-	ConfigurationKeeper(QObject *parent=nullptr);
-	~ConfigurationKeeper();
 
+public:
 	void setHttpCacheSize(int cache_size);
 	int httpCacheSize() const;
 
@@ -61,8 +59,14 @@ public:
 	void setShowBrowserWindow(int show_browser_window);
 	int showBrowserWindow() const;
 
-	void setLoadImages(int load_images);
-	int loadImages() const;
+	void setRemoteDebuggingPort(int remote_debugging_port);
+	int remoteDebuggingPort() const;
+
+	void setRemoteDebuggingEnabled(bool remote_debugging_enabled);
+	bool remoteDebuggingEnabled() const;
+
+	void setLoadImages(bool load_images);
+	bool loadImages() const;
 
 	void addAllowedUrlScheme(const QString &allowed_url_scheme);
 	void removeAllowedUrlScheme(const QString &allowed_url_scheme);

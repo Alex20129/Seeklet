@@ -7,10 +7,15 @@ ConfigurationKeeper *gSettings=nullptr;
 
 int main(int argc, char **argv)
 {
-	QApplication seekletApp(argc, argv);
-
-	gSettings=new ConfigurationKeeper(&seekletApp);
+	gSettings=new ConfigurationKeeper();
 	gSettings->loadSettingsFromJsonFile("crawler.json");
+
+	if(gSettings->remoteDebuggingEnabled())
+	{
+		qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QByteArray::number(gSettings->remoteDebuggingPort()));
+	}
+
+	QApplication seekletApp(argc, argv);
 
 	Crawler *myCrawler=new Crawler(&seekletApp);
 	Indexer *myIndexer=new Indexer(&seekletApp);
