@@ -26,6 +26,7 @@ private slots:
 	void extractPageLinks();
 public:
 	WebPageProcessor(QObject *parent=nullptr);
+	~WebPageProcessor();
 	void setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type);
 	void setHttpCacheSize(int cache_size);
 	void setHttpUserAgent(const QString &user_agent);

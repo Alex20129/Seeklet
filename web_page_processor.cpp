@@ -18,17 +18,11 @@
 
 void WebPageProcessor::createNewWebPage()
 {
-	QWebEnginePage *oldWebPage=mWebPage;
-	QWebEnginePage *newWebPage=new QWebEnginePage(mProfile, this);
-	connect(newWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
-	disconnect(oldWebPage, nullptr, nullptr, nullptr);
-	mWebViewWidget->setPage(newWebPage);
-	mWebPage=newWebPage;
-	if(oldWebPage->isLoading())
-	{
-		oldWebPage->triggerAction(QWebEnginePage::WebAction::Stop);
-	}
-	oldWebPage->deleteLater();
+	mJSCompletionTimer->stop();
+	mWebPage->triggerAction(QWebEnginePage::WebAction::Stop);
+	mWebPage=new QWebEnginePage(mProfile, mWebViewWidget);
+	mWebViewWidget->setPage(mWebPage);
+	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
 }
 
 void WebPageProcessor::waitForJSToFinish(bool ok)
@@ -123,8 +117,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
 	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
 	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
-	mWebPage=new QWebEnginePage(mProfile, this);
-	mWebViewWidget=new QWebEngineView();
+	mWebViewWidget=new QWebEngineView(mProfile);
+	mWebPage=new QWebEnginePage(mProfile, mWebViewWidget);
 	mWebViewWidget->setPage(mWebPage);
 	setWindowSize(gSettings->windowSize());
 	if(gSettings->showBrowserWindow()==0)
@@ -161,6 +155,11 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentTEXT);
 	connect(mJSCompletionTimer, &QTimer::timeout, this, &WebPageProcessor::extractPageContentHTML);
 	connect(this, &WebPageProcessor::pageLoadingSuccess, this, &WebPageProcessor::extractPageLinks);
+}
+
+WebPageProcessor::~WebPageProcessor()
+{
+	delete mWebViewWidget;
 }
 
 void WebPageProcessor::setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type)
