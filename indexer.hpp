@@ -5,22 +5,7 @@
 #include <QStringList>
 #include <QDateTime>
 #include <QDataStream>
-
-typedef QPair<quint64, quint64> Hash128;
-typedef quint64 Hash64;
-
-struct PageMetadata
-{
-	QString title;
-	QByteArray url;
-	QDateTime timeStamp;
-	QHash<Hash64, quint64> wordsAsHashes;
-	Hash128 contentHash;
-	quint64 wordsTotal=0;
-	void writeToStream(QDataStream &stream) const;
-	void readFromStream(QDataStream &stream);
-	bool isValid() const;
-};
+#include "page_metadata.hpp"
 
 class Indexer : public QObject
 {

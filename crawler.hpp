@@ -3,7 +3,7 @@
 
 #include <QRandomGenerator>
 #include "web_page_processor.hpp"
-#include "indexer.hpp"
+#include "page_metadata.hpp"
 
 class Crawler : public QObject
 {

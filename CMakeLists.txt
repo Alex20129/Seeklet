@@ -24,12 +24,14 @@ LINK_LIBRARIES(htmlcxx)
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
 	main.hpp
 	main.cpp
-	crawler.hpp
-	crawler.cpp
 	configuration_keeper.hpp
 	configuration_keeper.cpp
+	crawler.hpp
+	crawler.cpp
 	indexer.hpp
 	indexer.cpp
+	page_metadata.hpp
+	page_metadata.cpp
 	web_page_processor.hpp
 	web_page_processor.cpp
 	xorshift_hash.hpp

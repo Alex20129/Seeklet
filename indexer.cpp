@@ -3,47 +3,6 @@
 #include "indexer.hpp"
 #include "xorshift_hash.hpp"
 
-void PageMetadata::writeToStream(QDataStream &stream) const
-{
-	stream << this->title;
-	stream << this->url;
-	stream << this->timeStamp;
-	stream << this->wordsAsHashes;
-	stream << this->contentHash;
-	stream << this->wordsTotal;
-}
-
-void PageMetadata::readFromStream(QDataStream &stream)
-{
-	stream >> this->title;
-	stream >> this->url;
-	stream >> this->timeStamp;
-	stream >> this->wordsAsHashes;
-	stream >> this->contentHash;
-	stream >> this->wordsTotal;
-}
-
-bool PageMetadata::isValid() const
-{
-	if(wordsTotal==0)
-	{
-		return(false);
-	}
-	if(wordsAsHashes.isEmpty())
-	{
-		return(false);
-	}
-	if(url.isEmpty())
-	{
-		return(false);
-	}
-	if(!timeStamp.isValid())
-	{
-		return(false);
-	}
-	return(true);
-}
-
 #ifndef NDEBUG
 void Indexer::printPageMetadata(const PageMetadata &page_md)
 {
@@ -52,8 +11,8 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 	qDebug() << "url:" << page_md.url;
 	qDebug() << "timeStamp:" << page_md.timeStamp.toString();
 	qDebug() << "contentHash:"
-			<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
-			<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
+		<< QByteArray::fromRawData((char *)&page_md.contentHash.second, 8).toHex()
+		<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
 	qDebug() << "words:";
 	QHash<Hash64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)

@@ -4,19 +4,31 @@ This project aims to create a truly decentralized, free and open-source search e
 Every participant runs a small node on ordinary hardware; together we build an independent, privacy-first alternative to centralized proprietary search services.
 
 # Requirements
-To build it you will need to install some development packages:
+To build it you will need to install some additional packages:
 
 Qt WebEngine
 
-`apt install qt6-webengine-dev`
+```
+apt install libqt6webenginecore6
+apt install libqt6webenginewidgets6
+apt install qt6-webengine-dev
+apt install qt6-webview-dev
+apt install qml6-module-qtwebengine
+apt install qml6-module-qtwebengine-controlsdelegates
+apt install qml6-module-qtwebview
+```
 
 HTMLcxx
 
-`apt install libhtmlcxx-dev`
+```
+apt install libhtmlcxx-dev
+```
 
 OpenDHT
 
-`apt install libopendht-dev`
+```
+apt install libopendht-dev
+```
 
 # Project roadmap:
 + Crawling

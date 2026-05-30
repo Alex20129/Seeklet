@@ -2,6 +2,7 @@
 #include <QTimer>
 #include "main.hpp"
 #include "crawler.hpp"
+#include "indexer.hpp"
 
 ConfigurationKeeper *gSettings=nullptr;
 
