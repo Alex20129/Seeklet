@@ -8,12 +8,12 @@
 class Crawler : public QObject
 {
 	Q_OBJECT
+	QRandomGenerator mRNG;
+	QTimer mPageLoadingTimer;
+	QSet<Hash128> mVisitedURLsHashes;
 	uint64_t mPagesRemaining;
-	QRandomGenerator *mRNG;
-	QTimer *mPageLoadingTimer;
 	WebPageProcessor *mWebPageProcessor;
 	QList<QUrl> *mURLListActive, *mURLListQueued;
-	QSet<Hash128> mVisitedURLsHashes;
 private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();

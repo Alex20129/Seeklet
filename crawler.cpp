@@ -30,14 +30,13 @@ QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 
 Crawler::Crawler(QObject *parent) : QObject(parent)
 {
-	uint32_t rngSeed=QDateTime::currentSecsSinceEpoch()+reinterpret_cast<uintptr_t>(this);
+	uint64_t rngSeed=QDateTime::currentSecsSinceEpoch()^reinterpret_cast<uint64_t>(this);
+	mRNG.seed(rngSeed);
+	mPageLoadingTimer.setSingleShot(true);
 	mURLListActive=new QList<QUrl>;
 	mURLListQueued=new QList<QUrl>;
-	mRNG=new QRandomGenerator(rngSeed);
-	mPageLoadingTimer=new QTimer(this);
-	mPageLoadingTimer->setSingleShot(1);
 	mWebPageProcessor=new WebPageProcessor(this);
-	connect(mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
+	connect(&mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 }
 
@@ -46,7 +45,6 @@ Crawler::~Crawler()
 	stop();
 	mURLListActive->clear();
 	mURLListQueued->clear();
-	delete mRNG;
 	delete mURLListQueued;
 	delete mURLListActive;
 }
@@ -73,7 +71,7 @@ void Crawler::loadNextPage()
 		emit finished();
 		return;
 	}
-	QUrl nextURL=mURLListActive->takeAt(mRNG->bounded(0, mURLListActive->count()));
+	QUrl nextURL=mURLListActive->takeAt(mRNG.bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
 	mWebPageProcessor->loadPage(nextURL);
@@ -122,11 +120,11 @@ void Crawler::onPageProcessingFinished()
 
 	if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
 	{
-		mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
+		mPageLoadingTimer.start(mRNG.bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
 	}
 	else
 	{
-		mPageLoadingTimer->start(gSettings->pageLoadingIntervalMin());
+		mPageLoadingTimer.start(gSettings->pageLoadingIntervalMin());
 	}
 }
 
@@ -204,16 +202,16 @@ void Crawler::start()
 	qDebug("Crawler::start");
 	mPagesRemaining=gSettings->pagesPerSession();
 	addURLsToQueue(gSettings->startUrls());
-	if(!mPageLoadingTimer->isActive())
+	if(!mPageLoadingTimer.isActive())
 	{
 		mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
 		if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
 		{
-			mPageLoadingTimer->start(mRNG->bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
+			mPageLoadingTimer.start(mRNG.bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));
 		}
 		else
 		{
-			mPageLoadingTimer->start(gSettings->pageLoadingIntervalMin());
+			mPageLoadingTimer.start(gSettings->pageLoadingIntervalMin());
 		}
 		emit started();
 	}
@@ -222,6 +220,6 @@ void Crawler::start()
 void Crawler::stop()
 {
 	qDebug("Crawler::stop");
-	mPageLoadingTimer->stop();
+	mPageLoadingTimer.stop();
 	mPagesRemaining=0;
 }
