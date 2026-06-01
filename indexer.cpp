@@ -1,4 +1,6 @@
 #include <QDir>
+#include <QDateTime>
+#include <QDataStream>
 #include "main.hpp"
 #include "indexer.hpp"
 #include "xorshift_hash.hpp"

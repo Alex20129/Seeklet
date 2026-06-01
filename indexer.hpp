@@ -1,10 +1,8 @@
 #ifndef INDEXER_HPP
 #define INDEXER_HPP
 
-#include <QMap>
+#include <QHash>
 #include <QStringList>
-#include <QDateTime>
-#include <QDataStream>
 #include "page_metadata.hpp"
 
 class Indexer : public QObject
