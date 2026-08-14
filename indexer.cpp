@@ -17,7 +17,7 @@ void Indexer::printPageMetadata(const PageMetadata &page_md)
 		<< QByteArray::fromRawData((char *)&page_md.contentHash.first, 8).toHex();
 	qDebug() << "words:";
 	QHash<Hash64, quint64>::const_iterator pageTfIt;
-	for(pageTfIt=page_md.wordsAsHashes.constBegin(); pageTfIt != page_md.wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=page_md.tfAsHashes.constBegin(); pageTfIt != page_md.tfAsHashes.constEnd(); pageTfIt++)
 	{
 		Hash64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
@@ -171,11 +171,11 @@ double Indexer::calculateTfIdfScore(const PageMetadata *page, const QString &wor
 	}
 	double pageWordsTotal=page->wordsTotal;
 	Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
-	if(page->wordsAsHashes.value(wordHash, 0)==0)
+	if(page->tfAsHashes.value(wordHash, 0)==0)
 	{
 		return 0.0;
 	}
-	double tfNormalized=page->wordsAsHashes.value(wordHash, 0);
+	double tfNormalized=page->tfAsHashes.value(wordHash, 0);
 	tfNormalized/=pageWordsTotal;
 	if(!mTableOfContents.contains(wordHash))
 	{
@@ -230,7 +230,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		return;
 	}
 	QHash<Hash64, quint64>::const_iterator pageTfIt;
-	for(pageTfIt=page_metadata.wordsAsHashes.constBegin(); pageTfIt != page_metadata.wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=page_metadata.tfAsHashes.constBegin(); pageTfIt != page_metadata.tfAsHashes.constEnd(); pageTfIt++)
 	{
 		Hash64 wordHash=pageTfIt.key();
 		quint64 wordTf=pageTfIt.value();
@@ -250,7 +250,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		PageMetadata *oldPageMetaData=mIndexByUrlHash.value(urlHash);
 		deletePage(oldPageMetaData);
 	}
-	for(pageTfIt=newPageMetaData->wordsAsHashes.constBegin(); pageTfIt != newPageMetaData->wordsAsHashes.constEnd(); pageTfIt++)
+	for(pageTfIt=newPageMetaData->tfAsHashes.constBegin(); pageTfIt != newPageMetaData->tfAsHashes.constEnd(); pageTfIt++)
 	{
 		Hash64 wordHash=pageTfIt.key();
 		mTableOfContents[wordHash].insert(newPageMetaData->contentHash);
@@ -270,7 +270,7 @@ void Indexer::deletePage(PageMetadata *page_metadata)
 	mIndexByContentHash.remove(contentHash);
 	mIndexByUrlHash.remove(urlHash);
 	QHash<Hash64, quint64>::const_iterator wordHashIt;
-	for(wordHashIt=page_metadata->wordsAsHashes.constBegin(); wordHashIt != page_metadata->wordsAsHashes.constEnd(); wordHashIt++)
+	for(wordHashIt=page_metadata->tfAsHashes.constBegin(); wordHashIt != page_metadata->tfAsHashes.constEnd(); wordHashIt++)
 	{
 		Hash64 wordHash=wordHashIt.key();
 		QHash<Hash64, QSet<Hash128>>::iterator tocIt=mTableOfContents.find(wordHash);

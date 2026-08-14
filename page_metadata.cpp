@@ -6,7 +6,7 @@ void PageMetadata::writeToStream(QDataStream &stream) const
 	stream << this->title;
 	stream << this->url;
 	stream << this->timeStamp;
-	stream << this->wordsAsHashes;
+	stream << this->tfAsHashes;
 	stream << this->contentHash;
 	stream << this->wordsTotal;
 }
@@ -16,7 +16,7 @@ void PageMetadata::readFromStream(QDataStream &stream)
 	stream >> this->title;
 	stream >> this->url;
 	stream >> this->timeStamp;
-	stream >> this->wordsAsHashes;
+	stream >> this->tfAsHashes;
 	stream >> this->contentHash;
 	stream >> this->wordsTotal;
 }
@@ -27,7 +27,7 @@ bool PageMetadata::isValid() const
 	{
 		return(false);
 	}
-	if(wordsAsHashes.isEmpty())
+	if(tfAsHashes.isEmpty())
 	{
 		return(false);
 	}
