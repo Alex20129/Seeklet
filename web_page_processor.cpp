@@ -369,6 +369,14 @@ void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
 QString decryptChromiumCookie(const QByteArray &encrypted_value)
 {
 	uint64_t WIP;
+	if(encrypted_value.startsWith("v10"))
+	{
+		qDebug("v10");
+	}
+	else if(encrypted_value.startsWith("v11"))
+	{
+		qDebug("v11");
+	}
 	return QString();
 }
 
