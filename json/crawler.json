@@ -1,7 +1,8 @@
 {
 	"http_user_agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0",
 	"http_cache_size":0,
-	"firefox_profile_directory":"/home/username/snap/firefox/common/.mozilla/firefox/profiles.ini",
+	"firefox_profile_directory":"/home/username/snap/firefox/common/.mozilla/firefox",
+	"chromium_profile_directory":"/home/username/snap/chromium/common/chromium",
 	"database_directory":"./indexer_database",
 	"js_completion_timeout":3000,
 	"load_images":true,

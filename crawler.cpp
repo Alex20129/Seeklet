@@ -36,6 +36,8 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mURLListActive=new QList<QUrl>;
 	mURLListQueued=new QList<QUrl>;
 	mWebPageProcessor=new WebPageProcessor(this);
+	mWebPageProcessor->loadCookiesFromFirefox(gSettings->firefoxProfileDirectory());
+	mWebPageProcessor->loadCookiesFromChromium(gSettings->chromiumProfileDirectory());
 	connect(&mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
 }
@@ -204,7 +206,6 @@ void Crawler::start()
 	addURLsToQueue(gSettings->startUrls());
 	if(!mPageLoadingTimer.isActive())
 	{
-		mWebPageProcessor->loadCookiesFromFirefoxProfile(gSettings->fireFoxProfileDirectory());
 		if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
 		{
 			mPageLoadingTimer.start(mRNG.bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));

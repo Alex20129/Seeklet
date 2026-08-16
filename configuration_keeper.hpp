@@ -10,7 +10,8 @@ class ConfigurationKeeper
 {
 	QString mHttpUserAgent;
 	QString mDatabaseDirectory;
-	QString mFireFoxProfileDirectory;
+	QString mFirefoxProfileDirectory;
+	QString mChromiumProfileDirectory;
 	QSize mCrawlerWindowSize;
 	int mHttpCacheSize=0;
 	int mJsCompletionTimeout=3000;
@@ -36,8 +37,11 @@ public:
 	void setDatabaseDirectory(const QString &database_directory);
 	const QString &databaseDirectory() const;
 
-	void setFireFoxProfileDirectory(const QString &firefox_profile_directory);
-	const QString &fireFoxProfileDirectory() const;
+	void setFirefoxProfileDirectory(const QString &firefox_profile_directory);
+	const QString &firefoxProfileDirectory() const;
+
+	void setChromiumProfileDirectory(const QString &chromium_profile_directory);
+	const QString &chromiumProfileDirectory() const;
 
 	void setWindowWidth(int window_width);
 	void setWindowHeight(int window_height);

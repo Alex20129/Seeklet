@@ -38,14 +38,24 @@ const QString &ConfigurationKeeper::databaseDirectory() const
 	return mDatabaseDirectory;
 }
 
-void ConfigurationKeeper::setFireFoxProfileDirectory(const QString &firefox_profile_directory)
+void ConfigurationKeeper::setFirefoxProfileDirectory(const QString &firefox_profile_directory)
 {
-	mFireFoxProfileDirectory=firefox_profile_directory;
+	mFirefoxProfileDirectory=firefox_profile_directory;
 }
 
-const QString &ConfigurationKeeper::fireFoxProfileDirectory() const
+const QString &ConfigurationKeeper::firefoxProfileDirectory() const
 {
-	return mFireFoxProfileDirectory;
+	return mFirefoxProfileDirectory;
+}
+
+void ConfigurationKeeper::setChromiumProfileDirectory(const QString &chromium_profile_directory)
+{
+	mChromiumProfileDirectory=chromium_profile_directory;
+}
+
+const QString &ConfigurationKeeper::chromiumProfileDirectory() const
+{
+	return mChromiumProfileDirectory;
 }
 
 void ConfigurationKeeper::setWindowWidth(int window_width)
@@ -348,7 +358,11 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	}
 	if(configJsonObject.value("firefox_profile_directory").isString())
 	{
-		this->setFireFoxProfileDirectory(configJsonObject.value("firefox_profile_directory").toString());
+		this->setFirefoxProfileDirectory(configJsonObject.value("firefox_profile_directory").toString());
+	}
+	if(configJsonObject.value("chromium_profile_directory").isString())
+	{
+		this->setChromiumProfileDirectory(configJsonObject.value("chromium_profile_directory").toString());
 	}
 	if(configJsonObject.value("window_width").isDouble())
 	{

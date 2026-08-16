@@ -6,6 +6,8 @@
 #include <QWebEngineSettings>
 #include <QFileInfo>
 #include <QSettings>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QDir>
 #include <QScreen>
 #include <QtSql/QSqlDatabase>
@@ -219,17 +221,17 @@ void WebPageProcessor::setWindowSize(QSize window_size)
 	}
 }
 
-void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file)
+void WebPageProcessor::loadCookiesFromFirefox(const QString &path_to_dir)
 {
-	if(path_to_file.isEmpty())
+	if(path_to_dir.isEmpty())
 	{
 		return;
 	}
-	QSettings settings(path_to_file, QSettings::IniFormat);
+	QDir profilesDir(path_to_dir);
+	QString iniFilePath=profilesDir.absoluteFilePath(QStringLiteral("profiles.ini"));
+	QSettings settings(iniFilePath, QSettings::IniFormat);
 	QStringList profiles=settings.childGroups();
-	QFileInfo iniFile(path_to_file);
-	QDir profilesDir=iniFile.absoluteDir();
-	QString profilePath;
+	QString profileDirPath;
 	for (const QString &group : profiles)
 	{
 		if (group.startsWith("Profile"))
@@ -237,27 +239,56 @@ void WebPageProcessor::loadCookiesFromFirefoxProfile(const QString &path_to_file
 			settings.beginGroup(group);
 			if (settings.contains("Default") && settings.value("Default").toInt() == 1)
 			{
-				profilePath=settings.value("Path").toString();
+				profileDirPath=settings.value("Path").toString();
 				settings.endGroup();
 				break;
 			}
-			if (profilePath.isEmpty())
+			if (profileDirPath.isEmpty())
 			{
-				profilePath=settings.value("Path").toString();
+				profileDirPath=settings.value("Path").toString();
 			}
 			settings.endGroup();
 		}
 	}
-	if (profilePath.isEmpty())
+	if (profileDirPath.isEmpty())
 	{
 		return;
 	}
-	QString cookiesFilePath=profilesDir.absoluteFilePath(profilePath + "/cookies.sqlite");
+	QString cookiesFilePath=profilesDir.absoluteFilePath(profileDirPath + "/cookies.sqlite");
 	if (!QFile::exists(cookiesFilePath))
 	{
 		return;
 	}
 	loadCookiesFromFirefoxDB(cookiesFilePath);
+}
+
+void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
+{
+	if(path_to_dir.isEmpty())
+	{
+		return;
+	}
+	QDir profilesDir(path_to_dir);
+	QString lsFilePath=profilesDir.absoluteFilePath(QStringLiteral("Local State"));
+	QFile lsFile(lsFilePath);
+	if(!lsFile.exists())
+	{
+		return;
+	}
+	QJsonObject lsJsonObject;
+	QJsonParseError lsJsonParseError;
+	if(lsFile.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		QByteArray lsFileData=lsFile.readAll();
+		QJsonDocument lsJsonDocument=QJsonDocument::fromJson(lsFileData, &lsJsonParseError);
+		lsJsonObject=lsJsonDocument.object();
+		lsFile.close();
+	}
+	if(lsJsonParseError.error!=QJsonParseError::NoError)
+	{
+		return;
+	}
+	return;
 }
 
 void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
