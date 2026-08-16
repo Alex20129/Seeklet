@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QDir>
 #include <QScreen>
 #include <QtSql/QSqlDatabase>
@@ -231,7 +232,7 @@ void WebPageProcessor::loadCookiesFromFirefox(const QString &path_to_dir)
 	QString iniFilePath=profilesDir.absoluteFilePath(QStringLiteral("profiles.ini"));
 	QSettings settings(iniFilePath, QSettings::IniFormat);
 	QStringList profiles=settings.childGroups();
-	QString profileDirPath;
+	QString profileDirName;
 	for (const QString &group : profiles)
 	{
 		if (group.startsWith("Profile"))
@@ -239,60 +240,31 @@ void WebPageProcessor::loadCookiesFromFirefox(const QString &path_to_dir)
 			settings.beginGroup(group);
 			if (settings.contains("Default") && settings.value("Default").toInt() == 1)
 			{
-				profileDirPath=settings.value("Path").toString();
+				profileDirName=settings.value("Path").toString();
 				settings.endGroup();
 				break;
 			}
-			if (profileDirPath.isEmpty())
+			if (profileDirName.isEmpty())
 			{
-				profileDirPath=settings.value("Path").toString();
+				profileDirName=settings.value("Path").toString();
 			}
 			settings.endGroup();
 		}
 	}
-	if (profileDirPath.isEmpty())
+	if (profileDirName.isEmpty())
 	{
 		return;
 	}
-	QString cookiesFilePath=profilesDir.absoluteFilePath(profileDirPath + "/cookies.sqlite");
-	if (!QFile::exists(cookiesFilePath))
-	{
-		return;
-	}
+	QString cookiesFilePath=profilesDir.absoluteFilePath(profileDirName) + QStringLiteral("/cookies.sqlite");
 	loadCookiesFromFirefoxDB(cookiesFilePath);
-}
-
-void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
-{
-	if(path_to_dir.isEmpty())
-	{
-		return;
-	}
-	QDir profilesDir(path_to_dir);
-	QString lsFilePath=profilesDir.absoluteFilePath(QStringLiteral("Local State"));
-	QFile lsFile(lsFilePath);
-	if(!lsFile.exists())
-	{
-		return;
-	}
-	QJsonObject lsJsonObject;
-	QJsonParseError lsJsonParseError;
-	if(lsFile.open(QIODevice::ReadOnly | QIODevice::Text))
-	{
-		QByteArray lsFileData=lsFile.readAll();
-		QJsonDocument lsJsonDocument=QJsonDocument::fromJson(lsFileData, &lsJsonParseError);
-		lsJsonObject=lsJsonDocument.object();
-		lsFile.close();
-	}
-	if(lsJsonParseError.error!=QJsonParseError::NoError)
-	{
-		return;
-	}
-	return;
 }
 
 void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 {
+	if (!QFile::exists(path_to_file))
+	{
+		return;
+	}
 	QList<QNetworkCookie> cookies;
 	{
 		QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE", "firefox_cookies");
@@ -333,6 +305,56 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 	{
 		mProfile->cookieStore()->setCookie(cookie);
 	}
+}
+
+void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
+{
+	if(path_to_dir.isEmpty())
+	{
+		return;
+	}
+	QDir profilesDir(path_to_dir);
+	QString lsFilePath=profilesDir.absoluteFilePath(QStringLiteral("Local State"));
+	QFile lsFile(lsFilePath);
+	if(!lsFile.exists())
+	{
+		return;
+	}
+	QJsonObject lsJsonObject;
+	QJsonParseError lsJsonParseError;
+	if(lsFile.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		QByteArray lsFileData=lsFile.readAll();
+		QJsonDocument lsJsonDocument=QJsonDocument::fromJson(lsFileData, &lsJsonParseError);
+		lsJsonObject=lsJsonDocument.object();
+		lsFile.close();
+	}
+	if(lsJsonParseError.error!=QJsonParseError::NoError)
+	{
+		return;
+	}
+	QJsonObject profileJsonObject=lsJsonObject.value("profile").toObject();
+	QJsonArray profilesOrderJsonArray=profileJsonObject.value("profiles_order").toArray();
+	if(profilesOrderJsonArray.isEmpty())
+	{
+		return;
+	}
+	QString profileDirName(profilesOrderJsonArray.first().toString());
+	if (profileDirName.isEmpty())
+	{
+		return;
+	}
+	QString cookiesFilePath=profilesDir.absoluteFilePath(profileDirName)+QStringLiteral("/Cookies");
+	loadCookiesFromChromiumDB(cookiesFilePath);
+}
+
+void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
+{
+	if (!QFile::exists(path_to_file))
+	{
+		return;
+	}
+	QList<QNetworkCookie> cookies;
 }
 
 void WebPageProcessor::loadPage(const QUrl &url)

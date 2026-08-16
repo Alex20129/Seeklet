@@ -33,8 +33,9 @@ public:
 	void setLoadImages(bool load_images);
 	void setWindowSize(QSize window_size);
 	void loadCookiesFromFirefox(const QString &path_to_dir);
-	void loadCookiesFromChromium(const QString &path_to_dir);
 	void loadCookiesFromFirefoxDB(const QString &path_to_file);
+	void loadCookiesFromChromium(const QString &path_to_dir);
+	void loadCookiesFromChromiumDB(const QString &path_to_file);
 	void loadPage(const QUrl &url);
 	const QString &getPageContentAsHTML() const;
 	const QString &getPageContentAsTEXT() const;
