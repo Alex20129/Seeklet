@@ -230,6 +230,10 @@ void WebPageProcessor::loadCookiesFromFirefox(const QString &path_to_dir)
 	}
 	QDir profilesDir(path_to_dir);
 	QString iniFilePath=profilesDir.absoluteFilePath(QStringLiteral("profiles.ini"));
+	if (!QFile::exists(iniFilePath))
+	{
+		return;
+	}
 	QSettings settings(iniFilePath, QSettings::IniFormat);
 	QStringList profiles=settings.childGroups();
 	QString profileDirName;
@@ -278,11 +282,15 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 				{
 					QString host=query.value("host").toString();
 					QString path=query.value("path").toString();
-					bool isSecure=query.value("isSecure").toBool();
-					qint64 expiry=query.value("expiry").toLongLong();
 					QString name=query.value("name").toString();
 					QString value=query.value("value").toString();
-					if (expiry != 0 && expiry < QDateTime::currentSecsSinceEpoch())
+					bool isSecure=query.value("isSecure").toBool();
+					qint64 expiry=query.value("expiry").toLongLong();
+					if (expiry != 0 && expiry < QDateTime::currentMSecsSinceEpoch())
+					{
+						continue;
+					}
+					if(value.isEmpty())
 					{
 						continue;
 					}
@@ -292,7 +300,7 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 					cookie.setSecure(isSecure);
 					if (expiry != 0)
 					{
-						cookie.setExpirationDate(QDateTime::fromSecsSinceEpoch(expiry));
+						cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(expiry));
 					}
 					cookies.append(cookie);
 				}
@@ -329,23 +337,39 @@ void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
 		lsJsonObject=lsJsonDocument.object();
 		lsFile.close();
 	}
+	else
+	{
+		return;
+	}
 	if(lsJsonParseError.error!=QJsonParseError::NoError)
 	{
 		return;
 	}
 	QJsonObject profileJsonObject=lsJsonObject.value("profile").toObject();
+	QJsonArray lastActiveProfilesJsonArray=profileJsonObject.value("last_active_profiles").toArray();
 	QJsonArray profilesOrderJsonArray=profileJsonObject.value("profiles_order").toArray();
-	if(profilesOrderJsonArray.isEmpty())
+	QString profileDirName;
+	if(lastActiveProfilesJsonArray.size())
 	{
-		return;
+		profileDirName=lastActiveProfilesJsonArray.first().toString();
 	}
-	QString profileDirName(profilesOrderJsonArray.first().toString());
-	if (profileDirName.isEmpty())
+	else if(profilesOrderJsonArray.size())
+	{
+		profileDirName=profilesOrderJsonArray.first().toString();
+	}
+	if(profileDirName.isEmpty())
 	{
 		return;
 	}
 	QString cookiesFilePath=profilesDir.absoluteFilePath(profileDirName)+QStringLiteral("/Cookies");
 	loadCookiesFromChromiumDB(cookiesFilePath);
+}
+
+// TODO :
+QString decryptChromiumCookie(const QByteArray &encrypted_value)
+{
+	uint64_t WIP;
+	return QString();
 }
 
 void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
@@ -355,6 +379,61 @@ void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
 		return;
 	}
 	QList<QNetworkCookie> cookies;
+	{
+		QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE", "chromium_cookies");
+		db.setDatabaseName(path_to_file);
+		if (db.open())
+		{
+			QSqlQuery query(db);
+			if(query.exec("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies"))
+			{
+				while (query.next())
+				{
+					QString host=query.value("host_key").toString();
+					QString path=query.value("path").toString();
+					QString name=query.value("name").toString();
+					QString value=query.value("value").toString();
+					bool isSecure=query.value("is_secure").toBool();
+					bool isHttpOnly=query.value("is_httponly").toBool();
+					qint64 expiresUtc=query.value("expires_utc").toLongLong();
+					QByteArray encryptedValue=query.value("encrypted_value").toByteArray();
+					qint64 expiresUnixMs=0;
+					if(expiresUtc != 0)
+					{
+						expiresUnixMs = (expiresUtc / 1000LL) - 11644473600000LL;
+						if(expiresUnixMs < QDateTime::currentMSecsSinceEpoch())
+						{
+							continue;
+						}
+					}
+					if(value.isEmpty() && !encryptedValue.isEmpty())
+					{
+						value=decryptChromiumCookie(encryptedValue);
+					}
+					if(value.isEmpty())
+					{
+						continue;
+					}
+					QNetworkCookie cookie(name.toUtf8(), value.toUtf8());
+					cookie.setDomain(host);
+					cookie.setPath(path);
+					cookie.setSecure(isSecure);
+					cookie.setHttpOnly(isHttpOnly);
+					if (expiresUnixMs != 0)
+					{
+						cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(expiresUnixMs));
+					}
+					cookies.append(cookie);
+				}
+			}
+			db.close();
+		}
+	}
+	QSqlDatabase::removeDatabase("chromium_cookies");
+	for (const QNetworkCookie &cookie : cookies)
+	{
+		mProfile->cookieStore()->setCookie(cookie);
+	}
 }
 
 void WebPageProcessor::loadPage(const QUrl &url)
