@@ -19,6 +19,7 @@ class WebPageProcessor : public QObject
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;
 	void createNewWebPage();
+	void scrollPage() const;
 private slots:
 	void waitForJSToFinish(bool ok);
 	void extractPageContentTEXT();

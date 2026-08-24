@@ -28,10 +28,28 @@ void WebPageProcessor::createNewWebPage()
 	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
 }
 
+void WebPageProcessor::scrollPage() const
+{
+	mWebPage->runJavaScript(QStringLiteral(
+	R"((async function page_scroll()
+	{
+		const SCROLLS = 20;
+		const INTERVAL_MS = 250;
+		let scrollDistance = window.document.body.scrollHeight;
+		let scroll = 0;
+		while (scroll++ < SCROLLS)
+		{
+			window.scrollBy(0, Math.round(scrollDistance/SCROLLS));
+			await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
+		}
+	})();)"));
+}
+
 void WebPageProcessor::waitForJSToFinish(bool ok)
 {
 	if(ok)
 	{
+		scrollPage();
 		mJSCompletionTimer->start(gSettings->jsCompletionTimeout());
 	}
 	else
@@ -118,7 +136,10 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setHttpCacheMaximumSize(gSettings->httpCacheSize());
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-	mProfile->setHttpUserAgent(gSettings->httpUserAgent());
+	if(!gSettings->httpUserAgent().isEmpty())
+	{
+		mProfile->setHttpUserAgent(gSettings->httpUserAgent());
+	}
 	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
 	mWebViewWidget=new QWebEngineView(mProfile);
 	mWebPage=new QWebEnginePage(mProfile, mWebViewWidget);
@@ -188,6 +209,10 @@ void WebPageProcessor::setHttpCacheSize(int cache_size)
 
 void WebPageProcessor::setHttpUserAgent(const QString &user_agent)
 {
+	if(user_agent.isEmpty())
+	{
+		return;
+	}
 	if(mProfile->httpUserAgent()!=user_agent)
 	{
 		mProfile->setHttpUserAgent(user_agent);
@@ -371,11 +396,11 @@ QString decryptChromiumCookie(const QByteArray &encrypted_value)
 	uint64_t WIP;
 	if(encrypted_value.startsWith("v10"))
 	{
-		qDebug("v10");
+		// qDebug("v10");
 	}
 	else if(encrypted_value.startsWith("v11"))
 	{
-		qDebug("v11");
+		// qDebug("v11");
 	}
 	return QString();
 }
