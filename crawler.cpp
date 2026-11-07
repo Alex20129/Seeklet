@@ -40,6 +40,7 @@ Crawler::Crawler(QObject *parent) : QObject(parent)
 	mWebPageProcessor->loadCookiesFromChromium(gSettings->chromiumProfileDirectory());
 	connect(&mPageLoadingTimer, &QTimer::timeout, this, &Crawler::loadNextPage);
 	connect(mWebPageProcessor, &WebPageProcessor::pageProcessingFinished, this, &Crawler::onPageProcessingFinished);
+	connect(mWebPageProcessor, &WebPageProcessor::pageLoadingFail, this, &Crawler::scheduleNextPage);
 }
 
 Crawler::~Crawler()
@@ -120,6 +121,11 @@ void Crawler::onPageProcessingFinished()
 
 	addURLsToQueue(pageLinksList);
 
+	scheduleNextPage();
+}
+
+void Crawler::scheduleNextPage()
+{
 	if(gSettings->pageLoadingIntervalMin()<gSettings->pageLoadingIntervalMax())
 	{
 		mPageLoadingTimer.start(mRNG.bounded(gSettings->pageLoadingIntervalMin(), gSettings->pageLoadingIntervalMax()));

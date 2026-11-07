@@ -17,6 +17,7 @@ class Crawler : public QObject
 private slots:
 	void loadNextPage();
 	void onPageProcessingFinished();
+	void scheduleNextPage();
 public:
 	Crawler(QObject *parent=nullptr);
 	~Crawler();
