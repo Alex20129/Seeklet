@@ -33,12 +33,12 @@ uint64_t xorshiftstar_hash_64(const uint8_t *data, uint64_t len)
 	uint64_t result=XORSHIFT64_INITIAL_OFFSET+len, i;
 	for(i=0; i<len; i++)
 	{
-		result+=(uint64_t)(data[i]);
+		result+=data[i];
 		xorshiftstar_proc(result);
 	}
 	for(i=0; i<len; i++)
 	{
-		result+=(uint64_t)(data[i]);
+		result+=data[i];
 		xorshiftstar_proc(result);
 	}
 	return result;
@@ -51,23 +51,23 @@ std::pair<uint64_t, uint64_t> xorshiftstar_hash_128(const uint8_t *data, uint64_
 	uint64_t mix, i;
 	for(i=0; i<len; i++)
 	{
-		result_a+=(uint64_t)(data[i]);
-		result_b+=(uint64_t)(data[i]);
-		mix=result_a ^ result_b;
+		result_a+=data[i];
+		result_b+=data[i];
+		mix=result_a^result_b;
 		xorshiftstar_proc(result_a);
 		xorshiftstar_proc(result_b);
-		result_a ^= mix;
-		result_b ^= mix;
+		result_a^=mix;
+		result_b^=mix;
 	}
 	for(i=0; i<len; i++)
 	{
-		result_a+=(uint64_t)(data[i]);
-		result_b+=(uint64_t)(data[i]);
-		mix=result_a ^ result_b;
+		result_a+=data[i];
+		result_b+=data[i];
+		mix=result_a^result_b;
 		xorshiftstar_proc(result_a);
 		xorshiftstar_proc(result_b);
-		result_a ^= mix;
-		result_b ^= mix;
+		result_a^=mix;
+		result_b^=mix;
 	}
 	return {result_a, result_b};
 }
@@ -78,12 +78,12 @@ quint64 xorshiftstar_hash_64(const QByteArray &data)
 	QByteArray::const_iterator dataIt;
 	for(dataIt=data.constBegin(); dataIt!=data.constEnd(); dataIt++)
 	{
-		result+=(uint64_t)(*dataIt);
+		result+=*(uint8_t*)(dataIt);
 		xorshiftstar_proc(result);
 	}
 	for(dataIt=data.constBegin(); dataIt!=data.constEnd(); dataIt++)
 	{
-		result+=(uint64_t)(*dataIt);
+		result+=*(uint8_t*)(dataIt);
 		xorshiftstar_proc(result);
 	}
 	return result;
@@ -97,23 +97,23 @@ QPair<quint64, quint64> xorshiftstar_hash_128(const QByteArray &data)
 	QByteArray::const_iterator dataIt;
 	for(dataIt=data.constBegin(); dataIt!=data.constEnd(); dataIt++)
 	{
-		result_a+=(uint64_t)(*dataIt);
-		result_b+=(uint64_t)(*dataIt);
-		mix=result_a ^ result_b;
+		result_a+=*(uint8_t*)(dataIt);
+		result_b+=*(uint8_t*)(dataIt);
+		mix=result_a^result_b;
 		xorshiftstar_proc(result_a);
 		xorshiftstar_proc(result_b);
-		result_a ^= mix;
-		result_b ^= mix;
+		result_a^=mix;
+		result_b^=mix;
 	}
 	for(dataIt=data.constBegin(); dataIt!=data.constEnd(); dataIt++)
 	{
-		result_a+=(uint64_t)(*dataIt);
-		result_b+=(uint64_t)(*dataIt);
-		mix=result_a ^ result_b;
+		result_a+=*(uint8_t*)(dataIt);
+		result_b+=*(uint8_t*)(dataIt);
+		mix=result_a^result_b;
 		xorshiftstar_proc(result_a);
 		xorshiftstar_proc(result_b);
-		result_a ^= mix;
-		result_b ^= mix;
+		result_a^=mix;
+		result_b^=mix;
 	}
 	return {result_a, result_b};
 }
