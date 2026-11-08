@@ -22,10 +22,13 @@
 void WebPageProcessor::createNewWebPage()
 {
 	mJSCompletionTimer->stop();
-	mWebPage->triggerAction(QWebEnginePage::WebAction::Stop);
-	mWebPage=new QWebEnginePage(mProfile, mWebViewWidget);
+	QWebEnginePage *oldWebPage=mWebPage;
+	oldWebPage->triggerAction(QWebEnginePage::WebAction::Stop);
+	disconnect(oldWebPage, nullptr, nullptr, nullptr);
+	mWebPage=new QWebEnginePage(mProfile);
 	mWebViewWidget->setPage(mWebPage);
 	connect(mWebPage, &QWebEnginePage::loadFinished, this, &WebPageProcessor::waitForJSToFinish);
+	oldWebPage->deleteLater();
 }
 
 void WebPageProcessor::scrollPage() const
@@ -132,7 +135,7 @@ void WebPageProcessor::extractPageLinks()
 
 WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 {
-	mProfile=new QWebEngineProfile(this);
+	mProfile=new QWebEngineProfile();
 	mProfile->setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
 	mProfile->setHttpCacheMaximumSize(gSettings->httpCacheSize());
 	mProfile->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
@@ -141,8 +144,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 		mProfile->setHttpUserAgent(gSettings->httpUserAgent());
 	}
 	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
+	mWebPage=new QWebEnginePage(mProfile);
 	mWebViewWidget=new QWebEngineView(mProfile);
-	mWebPage=new QWebEnginePage(mProfile, mWebViewWidget);
 	mWebViewWidget->setPage(mWebPage);
 	setWindowSize(gSettings->windowSize());
 	if(gSettings->showBrowserWindow()==0)
@@ -184,6 +187,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 WebPageProcessor::~WebPageProcessor()
 {
 	delete mWebViewWidget;
+	delete mWebPage;
+	delete mProfile;
 }
 
 void WebPageProcessor::setHttpCacheType(QWebEngineProfile::HttpCacheType cache_type)

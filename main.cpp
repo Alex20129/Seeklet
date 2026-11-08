@@ -18,8 +18,8 @@ int main(int argc, char **argv)
 
 	QApplication seekletApp(argc, argv);
 
-	Crawler *myCrawler=new Crawler(&seekletApp);
-	Indexer *myIndexer=new Indexer(&seekletApp);
+	Crawler *myCrawler=new Crawler();
+	Indexer *myIndexer=new Indexer();
 
 	QObject::connect(myCrawler, &Crawler::needToAddPage, myIndexer, &Indexer::addPage);
 	QObject::connect(myCrawler, &Crawler::needToAddWord, myIndexer, &Indexer::addWord);
@@ -30,5 +30,10 @@ int main(int argc, char **argv)
 	// QTimer::singleShot(0, myIndexer, &Indexer::searchTest);
 	QTimer::singleShot(0, myCrawler, &Crawler::start);
 
-	return(seekletApp.exec());
+	int appRetCode=seekletApp.exec();
+
+	delete myIndexer;
+	delete myCrawler;
+
+	return(appRetCode);
 }
