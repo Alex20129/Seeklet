@@ -18,6 +18,8 @@ class WebPageProcessor : public QObject
 	QString mPageContentHTML;
 	QString mPageContentTEXT;
 	QList<QUrl> mPageLinks;
+	bool mPageContentHTMLObtained=false;
+	bool mPageContentTEXTObtained=false;
 	void createNewWebPage();
 	void scrollPage() const;
 private slots:

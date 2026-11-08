@@ -68,7 +68,8 @@ void WebPageProcessor::extractPageContentTEXT()
 		[this](const QString &text)
 		{
 			this->mPageContentTEXT=text;
-			if(!this->mPageContentHTML.isEmpty())
+			this->mPageContentTEXTObtained=true;
+			if(mPageContentHTMLObtained)
 			{
 				emit pageLoadingSuccess();
 			}
@@ -81,7 +82,8 @@ void WebPageProcessor::extractPageContentHTML()
 		[this](const QString &html)
 		{
 			this->mPageContentHTML=html;
-			if(!this->mPageContentTEXT.isEmpty())
+			this->mPageContentHTMLObtained=true;
+			if(mPageContentTEXTObtained)
 			{
 				emit pageLoadingSuccess();
 			}
@@ -482,6 +484,8 @@ void WebPageProcessor::loadPage(const QUrl &url)
 	mPageContentHTML.clear();
 	mPageContentTEXT.clear();
 	mPageLinks.clear();
+	mPageContentHTMLObtained=false;
+	mPageContentTEXTObtained=false;
 	mWebPage->load(url);
 }
 
