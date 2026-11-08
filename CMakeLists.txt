@@ -13,8 +13,8 @@ ELSE()
 ENDIF()
 
 FIND_PACKAGE(OpenSSL REQUIRED)
+LINK_LIBRARIES(OpenSSL::Crypto)
 MESSAGE("OpenSSL version: ${OPENSSL_VERSION}")
-LINK_LIBRARIES("${OPENSSL_LIBRARIES}")
 
 FIND_PACKAGE(Qt6 COMPONENTS Core Network Sql WebEngineCore WebEngineWidgets REQUIRED)
 LINK_LIBRARIES(Qt6::Core Qt6::Network Qt6::Sql Qt6::WebEngineCore Qt6::WebEngineWidgets)
@@ -32,6 +32,8 @@ ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}
 	indexer.cpp
 	page_metadata.hpp
 	page_metadata.cpp
+	chromium_cookie.hpp
+	chromium_cookie.cpp
 	web_page_processor.hpp
 	web_page_processor.cpp
 	xorshift_hash.hpp

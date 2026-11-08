@@ -18,6 +18,7 @@
 #include <htmlcxx/html/Uri.h>
 #include "main.hpp"
 #include "web_page_processor.hpp"
+#include "chromium_cookie.hpp"
 
 void WebPageProcessor::createNewWebPage()
 {
@@ -303,6 +304,7 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 	{
 		QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE", "firefox_cookies");
 		db.setDatabaseName(path_to_file);
+		db.setConnectOptions("QSQLITE_OPEN_READONLY");
 		if (db.open())
 		{
 			QSqlQuery query(db);
@@ -336,6 +338,10 @@ void WebPageProcessor::loadCookiesFromFirefoxDB(const QString &path_to_file)
 				}
 			}
 			db.close();
+		}
+		else
+		{
+			qWarning() << "Cannot open Firefox cookie database";
 		}
 	}
 	QSqlDatabase::removeDatabase("firefox_cookies");
@@ -395,21 +401,6 @@ void WebPageProcessor::loadCookiesFromChromium(const QString &path_to_dir)
 	loadCookiesFromChromiumDB(cookiesFilePath);
 }
 
-// TODO :
-QString decryptChromiumCookie(const QByteArray &encrypted_value)
-{
-	uint64_t WIP;
-	if(encrypted_value.startsWith("v10"))
-	{
-		// qDebug("v10");
-	}
-	else if(encrypted_value.startsWith("v11"))
-	{
-		// qDebug("v11");
-	}
-	return QString();
-}
-
 void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
 {
 	if (!QFile::exists(path_to_file))
@@ -420,6 +411,7 @@ void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
 	{
 		QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE", "chromium_cookies");
 		db.setDatabaseName(path_to_file);
+		db.setConnectOptions("QSQLITE_OPEN_READONLY");
 		if (db.open())
 		{
 			QSqlQuery query(db);
@@ -446,7 +438,14 @@ void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
 					}
 					if(value.isEmpty() && !encryptedValue.isEmpty())
 					{
-						value=decryptChromiumCookie(encryptedValue);
+						if(encryptedValue.startsWith("v10"))
+						{
+							value=decryptChromiumCookieV10(encryptedValue, host);
+						}
+						else if(encryptedValue.startsWith("v11"))
+						{
+							value=decryptChromiumCookieV11(encryptedValue, host);
+						}
 					}
 					if(value.isEmpty())
 					{
@@ -465,6 +464,10 @@ void WebPageProcessor::loadCookiesFromChromiumDB(const QString &path_to_file)
 				}
 			}
 			db.close();
+		}
+		else
+		{
+			qWarning() << "Cannot open Chromium cookie database";
 		}
 	}
 	QSqlDatabase::removeDatabase("chromium_cookies");
