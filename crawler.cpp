@@ -77,6 +77,7 @@ void Crawler::loadNextPage()
 	QUrl nextURL=mURLListActive->takeAt(mRNG.bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
+	mVisitedURLsHashes.insert(xorshiftstar_hash_128(nextURL.toEncoded()));
 	mWebPageProcessor->loadPage(nextURL);
 }
 
@@ -93,9 +94,6 @@ void Crawler::onPageProcessingFinished()
 	pageMetadata.title=mWebPageProcessor->getPageTitle();
 	pageMetadata.url=mWebPageProcessor->getPageURLEncoded(QUrl::RemoveFragment);
 	pageMetadata.contentHash=xorshiftstar_hash_128(pageContentHtml.toUtf8());
-
-	Hash128 urlHash=xorshiftstar_hash_128(pageMetadata.url);
-	mVisitedURLsHashes.insert(urlHash);
 
 	qDebug() << pageMetadata.title << "\n" << pageMetadata.url;
 
@@ -149,7 +147,6 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
-	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	QString URLString=urlAdjusted.toString();
 	qDebug() << URLString;
 	bool skipThisURL=false;
@@ -158,7 +155,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
 	}
-	else if(mVisitedURLsHashes.contains(urlHash))
+	else if(mVisitedURLsHashes.contains(xorshiftstar_hash_128(urlAdjusted.toEncoded())))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping visited page";
