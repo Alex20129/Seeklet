@@ -30,7 +30,7 @@ OpenDHT
 apt install libopendht-dev
 ```
 
-# Project roadmap:
+# Project roadmap
 + Crawling
 + Indexing
 + Local index database: saving, loading
