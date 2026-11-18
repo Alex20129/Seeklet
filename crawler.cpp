@@ -10,19 +10,16 @@
 
 QMap<QString, quint64> ExtractAndCountWords(const QString &text)
 {
-	const QString lowerText=text.toLower();
-	static const QRegularExpression wordsRegex("[^a-zа-яё]+");
-	static const QRegularExpression digitsRegex("^[0-9]+$");
+	QString lowerText=text.toLower();
+	lowerText.remove(QChar(0x0301));
+	static const QRegularExpression wordsRegex("[^a-zа-яё0-9]+");
 	QMap<QString, quint64> wordMap;
 	const QStringList words=lowerText.split(wordsRegex, Qt::SkipEmptyParts);
 	for (const QString &word : words)
 	{
 		if (word.length()>2 && word.length()<33)
 		{
-			if (!digitsRegex.match(word).hasMatch())
-			{
-				wordMap[word] += 1;
-			}
+			wordMap[word]++;
 		}
 	}
 	return wordMap;
