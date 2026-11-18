@@ -1,9 +1,6 @@
 #include <QDir>
-#include <QDateTime>
-#include <QDataStream>
 #include "main.hpp"
 #include "indexer.hpp"
-#include "xorshift_hash.hpp"
 
 #ifndef NDEBUG
 void Indexer::printPageMetadata(const PageMetadata &page_md)

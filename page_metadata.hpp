@@ -5,9 +5,7 @@
 #include <QHash>
 #include <QDateTime>
 #include <QDataStream>
-
-typedef QPair<quint64, quint64> Hash128;
-typedef quint64 Hash64;
+#include "xorshift_hash.hpp"
 
 struct PageMetadata
 {
