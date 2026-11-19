@@ -115,9 +115,7 @@ void Crawler::onPageProcessingFinished()
 	{
 		emit needToAddPage(pageMetadata);
 	}
-
 	addURLsToQueue(pageLinksList);
-
 	scheduleNextPage();
 }
 
@@ -146,9 +144,8 @@ void Crawler::addURLToQueue(const QUrl &url)
 {
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
-	QString URLString=urlAdjusted.toString();
 	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
-	qDebug() << URLString;
+	qDebug() << urlAdjusted.toEncoded();
 	bool skipThisURL=false;
 	if(gSettings->blacklistedHosts().contains(urlAdjusted.host()))
 	{
@@ -169,7 +166,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 		{
 			if(!zonePrefix.isEmpty())
 			{
-				if(URLString.startsWith(zonePrefix))
+				if(urlAdjusted.toString().startsWith(zonePrefix))
 				{
 					urlAllowedByZonePrefix=1;
 					break;
@@ -201,6 +198,15 @@ void Crawler::addURLToQueue(const QUrl &url)
 		mQueuedURLsHashes.insert(urlHash);
 		qDebug() << "Adding URL to the processing list";
 	}
+}
+
+void Crawler::markURLAsVisited(const QUrl &url)
+{
+	qDebug("Crawler::markURLAsVisited");
+	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
+	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
+	qDebug() << urlAdjusted.toEncoded();
+	mVisitedURLsHashes.insert(urlHash);
 }
 
 void Crawler::start()

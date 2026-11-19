@@ -24,6 +24,7 @@ public:
 	~Crawler();
 	void addURLsToQueue(const QList<QUrl> &urls);
 	void addURLToQueue(const QUrl &url);
+	void markURLAsVisited(const QUrl &url);
 public slots:
 	void start();
 	void stop();
