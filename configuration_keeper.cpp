@@ -264,15 +264,17 @@ void ConfigurationKeeper::addBlacklistedHost(const QString &blacklisted_host)
 	{
 		return;
 	}
-	if(!mBlacklistedHosts.contains(blacklisted_host))
+	const QString lowerHost=blacklisted_host.toLower();
+	if(!mBlacklistedHosts.contains(lowerHost))
 	{
-		mBlacklistedHosts.insert(blacklisted_host);
+		mBlacklistedHosts.insert(lowerHost);
 	}
 }
 
 void ConfigurationKeeper::removeBlacklistedHost(const QString &blacklisted_host)
 {
-	mBlacklistedHosts.remove(blacklisted_host);
+	const QString lowerHost=blacklisted_host.toLower();
+	mBlacklistedHosts.remove(lowerHost);
 }
 
 const QSet<QString> &ConfigurationKeeper::blacklistedHosts() const

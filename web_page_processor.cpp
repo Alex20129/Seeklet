@@ -20,6 +20,18 @@
 #include "web_page_processor.hpp"
 #include "chromium_cookie.hpp"
 
+BlacklistedHostRequestInterceptor::BlacklistedHostRequestInterceptor(QObject *parent) : QWebEngineUrlRequestInterceptor(parent)
+{
+}
+
+void BlacklistedHostRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
+{
+	if(gSettings->blacklistedHosts().contains(info.requestUrl().host().toLower()))
+	{
+		info.block(true);
+	}
+}
+
 void WebPageProcessor::createNewWebPage()
 {
 	mJSCompletionTimer->stop();
@@ -147,6 +159,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 		mProfile->setHttpUserAgent(gSettings->httpUserAgent());
 	}
 	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
+	mBlacklistedHostRequestInterceptor=new BlacklistedHostRequestInterceptor(this);
+	mProfile->setUrlRequestInterceptor(mBlacklistedHostRequestInterceptor);
 	mWebPage=new QWebEnginePage(mProfile);
 	mWebViewWidget=new QWebEngineView(mProfile);
 	mWebViewWidget->setPage(mWebPage);

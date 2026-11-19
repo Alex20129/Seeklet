@@ -4,9 +4,18 @@
 #include <QWebEnginePage>
 #include <QWebEngineProfile>
 #include <QWebEngineView>
+#include <QWebEngineUrlRequestInterceptor>
 #include <QString>
 #include <QTimer>
 #include <QObject>
+
+class BlacklistedHostRequestInterceptor : public QWebEngineUrlRequestInterceptor
+{
+	Q_OBJECT
+public:
+	BlacklistedHostRequestInterceptor(QObject *parent=nullptr);
+	void interceptRequest(QWebEngineUrlRequestInfo &info) override;
+};
 
 class WebPageProcessor : public QObject
 {
@@ -14,6 +23,7 @@ class WebPageProcessor : public QObject
 	QWebEnginePage *mWebPage=nullptr;
 	QWebEngineProfile *mProfile=nullptr;
 	QWebEngineView *mWebViewWidget=nullptr;
+	BlacklistedHostRequestInterceptor *mBlacklistedHostRequestInterceptor=nullptr;
 	QTimer *mJSCompletionTimer=nullptr;
 	QString mPageContentHTML;
 	QString mPageContentTEXT;

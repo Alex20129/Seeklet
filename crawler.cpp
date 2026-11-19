@@ -147,7 +147,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	qDebug() << urlAdjusted.toEncoded();
 	bool skipThisURL=false;
-	if(gSettings->blacklistedHosts().contains(urlAdjusted.host()))
+	if(gSettings->blacklistedHosts().contains(urlAdjusted.host().toLower()))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
