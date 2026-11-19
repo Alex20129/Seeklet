@@ -226,10 +226,6 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 	{
 		return;
 	}
-	if(mIndexByContentHash.contains(page_metadata.contentHash))
-	{
-		return;
-	}
 	QHash<Hash64, quint64>::const_iterator pageTfIt;
 	for(pageTfIt=page_metadata.tfAsHashes.constBegin(); pageTfIt != page_metadata.tfAsHashes.constEnd(); pageTfIt++)
 	{
@@ -245,10 +241,15 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		}
 	}
 	PageMetadata *newPageMetaData=new PageMetadata(page_metadata);
-	Hash128 urlHash=xorshiftstar_hash_128(newPageMetaData->url);
-	if(mIndexByUrlHash.contains(urlHash))
+	Hash128 newUrlHash=xorshiftstar_hash_128(newPageMetaData->url);
+	if(mIndexByContentHash.contains(newPageMetaData->contentHash))
 	{
-		PageMetadata *oldPageMetaData=mIndexByUrlHash.value(urlHash);
+		PageMetadata *oldPageMetaData=mIndexByContentHash.value(newPageMetaData->contentHash);
+		deletePage(oldPageMetaData);
+	}
+	if(mIndexByUrlHash.contains(newUrlHash))
+	{
+		PageMetadata *oldPageMetaData=mIndexByUrlHash.value(newUrlHash);
 		deletePage(oldPageMetaData);
 	}
 	for(pageTfIt=newPageMetaData->tfAsHashes.constBegin(); pageTfIt != newPageMetaData->tfAsHashes.constEnd(); pageTfIt++)
@@ -256,7 +257,7 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 		Hash64 wordHash=pageTfIt.key();
 		mTableOfContents[wordHash].insert(newPageMetaData->contentHash);
 	}
-	mIndexByUrlHash.insert(urlHash, newPageMetaData);
+	mIndexByUrlHash.insert(newUrlHash, newPageMetaData);
 	mIndexByContentHash.insert(newPageMetaData->contentHash, newPageMetaData);
 }
 
