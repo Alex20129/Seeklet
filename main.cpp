@@ -9,7 +9,11 @@ ConfigurationKeeper *gSettings=nullptr;
 int main(int argc, char **argv)
 {
 	gSettings=new ConfigurationKeeper();
-	gSettings->loadSettingsFromJsonFile("crawler.json");
+	if(gSettings->loadSettingsFromJsonFile("crawler.json")!=EXIT_SUCCESS)
+	{
+		fprintf(stderr, "Failed to load crawler settings.\n");
+		return(EXIT_FAILURE);
+	}
 
 	if(gSettings->remoteDebuggingEnabled())
 	{

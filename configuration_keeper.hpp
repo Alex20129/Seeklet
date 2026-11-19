@@ -88,8 +88,8 @@ public:
 	void removeCrawlingZone(const QUrl &crawling_zone);
 	const QHash<QString, QStringList> &crawlingZones()const;
 
-	void loadSettingsFromJsonFile(const QString &path_to_file);
-	void saveSettingsToJsonFile(const QString &path_to_file) const;
+	int loadSettingsFromJsonFile(const QString &path_to_file);
+	int saveSettingsToJsonFile(const QString &path_to_file) const;
 };
 
 #endif // CONFIGURATION_KEEPER_HPP

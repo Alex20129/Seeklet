@@ -312,20 +312,20 @@ const QHash<QString, QStringList> &ConfigurationKeeper::crawlingZones() const
 	return mCrawlingZones;
 }
 
-void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
+int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 {
 	if(path_to_file.isEmpty())
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
 	QFile configFile(path_to_file);
 	if (!configFile.exists())
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
 	if(!configFile.open(QIODevice::ReadOnly))
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
 
 	QByteArray configData=configFile.readAll();
@@ -336,12 +336,12 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 
 	if (err.error != QJsonParseError::NoError)
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
 
 	if(!configJsonDoc.isObject())
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
 
 	QJsonObject configJsonObject=configJsonDoc.object();
@@ -458,13 +458,22 @@ void ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 			}
 		}
 	}
+
+	return(EXIT_SUCCESS);
 }
 
-void ConfigurationKeeper::saveSettingsToJsonFile(const QString &path_to_file) const
+int ConfigurationKeeper::saveSettingsToJsonFile(const QString &path_to_file) const
 {
-	uint64_t WIP; // TODO: save as JSON
 	if(path_to_file.isEmpty())
 	{
-		return;
+		return(EXIT_FAILURE);
 	}
+	QFile configFile(path_to_file);
+	if(!configFile.open(QIODevice::WriteOnly))
+	{
+		return(EXIT_FAILURE);
+	}
+	uint64_t WIP; // TODO: save as JSON
+	configFile.close();
+	return(EXIT_SUCCESS);
 }
