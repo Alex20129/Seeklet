@@ -74,7 +74,9 @@ void Crawler::loadNextPage()
 	QUrl nextURL=mURLListActive->takeAt(mRNG.bounded(0, mURLListActive->count()));
 	qDebug() << nextURL.toString();
 	qDebug() << mURLListActive->count()+mURLListQueued->count() << "URLs pending on the list";
-	mVisitedURLsHashes.insert(xorshiftstar_hash_128(nextURL.toEncoded()));
+	Hash128 nextURLHash=xorshiftstar_hash_128(nextURL.toEncoded());
+	mQueuedURLsHashes.remove(nextURLHash);
+	mVisitedURLsHashes.insert(nextURLHash);
 	mWebPageProcessor->loadPage(nextURL);
 }
 
@@ -145,6 +147,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 	qDebug("Crawler::addURLToQueue");
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
 	QString URLString=urlAdjusted.toString();
+	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	qDebug() << URLString;
 	bool skipThisURL=false;
 	if(gSettings->blacklistedHosts().contains(urlAdjusted.host()))
@@ -152,7 +155,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 		skipThisURL=true;
 		qDebug() << "Skipping blacklisted host";
 	}
-	else if(mVisitedURLsHashes.contains(xorshiftstar_hash_128(urlAdjusted.toEncoded())))
+	else if(mVisitedURLsHashes.contains(urlHash))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping visited page";
@@ -187,7 +190,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 			qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
 		}
 	}
-	if(mURLListQueued->contains(urlAdjusted) || mURLListActive->contains(urlAdjusted))
+	if(mQueuedURLsHashes.contains(urlHash))
 	{
 		skipThisURL=true;
 		qDebug() << "Skipping duplicate URL";
@@ -195,6 +198,7 @@ void Crawler::addURLToQueue(const QUrl &url)
 	if(skipThisURL!=true)
 	{
 		mURLListQueued->append(urlAdjusted);
+		mQueuedURLsHashes.insert(urlHash);
 		qDebug() << "Adding URL to the processing list";
 	}
 }
