@@ -92,9 +92,9 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 	{
 		return searchResults;
 	}
-	uint64_t smallestSetKey;
+	Hash64 smallestSetKey=0;
 	QString smallestSetWord;
-	qsizetype smallestSetSize=LONG_LONG_MAX;
+	qsizetype smallestSetSize=INT64_MAX;
 	for(const QString &word : words)
 	{
 		Hash64 wordHash=xorshiftstar_hash_64(word.toUtf8());
@@ -108,6 +108,10 @@ QVector<const PageMetadata *> Indexer::searchPagesByWords(QStringList words) con
 			smallestSetKey=wordHash;
 			smallestSetWord=word;
 		}
+	}
+	if(0==smallestSetKey)
+	{
+		return searchResults;
 	}
 	words.removeAll(smallestSetWord);
 	QSet<Hash128> pageSubsetIntersection=mTableOfContents[smallestSetKey];
@@ -433,18 +437,19 @@ void Indexer::load()
 	}
 }
 
-#ifndef NDEBUG
 void Indexer::searchTest()
 {
 	qDebug("Indexer::searchTest");
+	uint64_t WIP; // For test&debug purpose only.
+#ifndef NDEBUG
 	QStringList query;
 	// query.append("office");
 	// query.append("business");
-	// query.append("grey");
-	// query.append("suit");
+	query.append("grey");
+	query.append("suit");
 	// query.append("hoodie");
-	query.append("wedding");
-	query.append("dress");
+	// query.append("wedding");
+	// query.append("dress");
 	const QVector<const PageMetadata *> searchResults=this->searchPagesByWords(query);
 	QFile searchResultFile(QString("search_result.html"));
 	if(searchResultFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -462,5 +467,5 @@ void Indexer::searchTest()
 		searchResultFile.write("</html>\n");
 		searchResultFile.close();
 	}
-}
 #endif
+}

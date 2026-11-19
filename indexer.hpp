@@ -45,9 +45,7 @@ public slots:
 	void addWord(const QString &word);
 	void save();
 	void load();
-#ifndef NDEBUG
 	void searchTest();
-#endif
 };
 
 #endif // INDEXER_HPP
