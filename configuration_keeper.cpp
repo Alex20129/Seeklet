@@ -214,28 +214,6 @@ bool ConfigurationKeeper::loadImages() const
 	return mLoadImages;
 }
 
-void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
-{
-	if(allowed_url_scheme.isEmpty())
-	{
-		return;
-	}
-	if(!mAllowedURLSchemes.contains(allowed_url_scheme))
-	{
-		mAllowedURLSchemes.append(allowed_url_scheme);
-	}
-}
-
-void ConfigurationKeeper::removeAllowedUrlScheme(const QString &allowed_url_scheme)
-{
-	mAllowedURLSchemes.removeAll(allowed_url_scheme);
-}
-
-const QStringList &ConfigurationKeeper::allowedUrlSchemes() const
-{
-	return mAllowedURLSchemes;
-}
-
 void ConfigurationKeeper::addStartUrl(const QUrl &start_url)
 {
 	if(!start_url.isValid())
@@ -258,58 +236,137 @@ const QList<QUrl> &ConfigurationKeeper::startUrls() const
 	return mStartUrls;
 }
 
+void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
+{
+	if(allowed_url_scheme.isEmpty())
+	{
+		return;
+	}
+	const QString lowerSchemeString=allowed_url_scheme.toLower();
+	mAllowedURLSchemes.insert(lowerSchemeString);
+}
+
+void ConfigurationKeeper::removeAllowedUrlScheme(const QString &allowed_url_scheme)
+{
+	if(allowed_url_scheme.isEmpty())
+	{
+		return;
+	}
+	const QString lowerSchemeString=allowed_url_scheme.toLower();
+	mAllowedURLSchemes.remove(lowerSchemeString);
+}
+
+const QSet<QString> &ConfigurationKeeper::allowedUrlSchemes() const
+{
+	return(mAllowedURLSchemes);
+}
+
 void ConfigurationKeeper::addBlacklistedHost(const QString &blacklisted_host)
 {
 	if(blacklisted_host.isEmpty())
 	{
 		return;
 	}
-	const QString lowerHost=blacklisted_host.toLower();
-	if(!mBlacklistedHosts.contains(lowerHost))
-	{
-		mBlacklistedHosts.insert(lowerHost);
-	}
+	const QString lowerHostString=blacklisted_host.toLower();
+	mBlacklistedHosts.insert(lowerHostString);
 }
 
 void ConfigurationKeeper::removeBlacklistedHost(const QString &blacklisted_host)
 {
-	const QString lowerHost=blacklisted_host.toLower();
-	mBlacklistedHosts.remove(lowerHost);
+	if(blacklisted_host.isEmpty())
+	{
+		return;
+	}
+	const QString lowerHostString=blacklisted_host.toLower();
+	mBlacklistedHosts.remove(lowerHostString);
 }
 
 const QSet<QString> &ConfigurationKeeper::blacklistedHosts() const
 {
-	return mBlacklistedHosts;
+	return(mBlacklistedHosts);
 }
 
-void ConfigurationKeeper::addCrawlingZone(const QUrl &crawling_zone)
+void ConfigurationKeeper::addCrawlingZone(const QString &crawling_zone)
 {
-	if(crawling_zone.host().isEmpty())
+	if(crawling_zone.isEmpty())
 	{
 		return;
 	}
-	if(!mCrawlingZones[crawling_zone.host()].contains(crawling_zone.toString()))
-	{
-		mCrawlingZones[crawling_zone.host()].append(crawling_zone.toString());
-	}
-}
-
-void ConfigurationKeeper::removeCrawlingZone(const QUrl &crawling_zone)
-{
-	if(crawling_zone.host().isEmpty())
+	const QString lowerZoneString=crawling_zone.toLower();
+	const QUrl zoneURL(lowerZoneString);
+	if(zoneURL.host().isEmpty())
 	{
 		return;
 	}
-	mCrawlingZones[crawling_zone.host()].removeAll(crawling_zone.toString());
-	if(mCrawlingZones[crawling_zone.host()].isEmpty())
+	if(!mCrawlingZones[zoneURL.host()].contains(lowerZoneString))
 	{
-		mCrawlingZones.remove(crawling_zone.host());
+		mCrawlingZones[zoneURL.host()].append(lowerZoneString);
+	}
+}
+
+void ConfigurationKeeper::removeCrawlingZone(const QString &crawling_zone)
+{
+	if(crawling_zone.isEmpty())
+	{
+		return;
+	}
+	const QString lowerZoneString=crawling_zone.toLower();
+	const QUrl zoneURL(lowerZoneString);
+	if(zoneURL.host().isEmpty())
+	{
+		return;
+	}
+	mCrawlingZones[zoneURL.host()].removeAll(lowerZoneString);
+	if(mCrawlingZones[zoneURL.host()].isEmpty())
+	{
+		mCrawlingZones.remove(zoneURL.host());
 	}
 }
 
 const QHash<QString, QStringList> &ConfigurationKeeper::crawlingZones() const
 {
-	return mCrawlingZones;
+	return(mCrawlingZones);
+}
+
+bool ConfigurationKeeper::urlSchemeAllowed(const QUrl &url) const
+{
+	const QString lowerSchemeString=url.scheme().toLower();
+	if(mAllowedURLSchemes.isEmpty())
+	{
+		return(true);
+	}
+	return(mAllowedURLSchemes.contains(lowerSchemeString));
+}
+
+bool ConfigurationKeeper::urlHostAllowed(const QUrl &url) const
+{
+	const QString lowerHostString=url.host().toLower();
+	if(mBlacklistedHosts.isEmpty())
+	{
+		return(true);
+	}
+	return(!mBlacklistedHosts.contains(lowerHostString));
+}
+
+bool ConfigurationKeeper::urlZoneAllowed(const QUrl &url) const
+{
+	const QString lowerUrlString=url.toString().toLower();
+	const QString lowerHostString=url.host().toLower();
+	if(mCrawlingZones.contains(lowerHostString))
+	{
+		bool allowedByZonePrefix=0;
+		const QStringList &zonePrefixes=mCrawlingZones[lowerHostString];
+		for(const QString &zonePrefix : zonePrefixes)
+		{
+			if(lowerUrlString.startsWith(zonePrefix))
+			{
+				allowedByZonePrefix=1;
+				break;
+			}
+		}
+		return(allowedByZonePrefix);
+	}
+	return(true);
 }
 
 int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)

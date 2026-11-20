@@ -22,8 +22,8 @@ class ConfigurationKeeper
 	int mRemoteDebuggingPort=9222;
 	bool mRemoteDebuggingEnabled=false;
 	bool mLoadImages=true;
-	QStringList mAllowedURLSchemes;
 	QList<QUrl> mStartUrls;
+	QSet<QString> mAllowedURLSchemes;
 	QSet<QString> mBlacklistedHosts;
 	QHash<QString, QStringList> mCrawlingZones;
 
@@ -72,21 +72,25 @@ public:
 	void setLoadImages(bool load_images);
 	bool loadImages() const;
 
-	void addAllowedUrlScheme(const QString &allowed_url_scheme);
-	void removeAllowedUrlScheme(const QString &allowed_url_scheme);
-	const QStringList &allowedUrlSchemes() const;
-
 	void addStartUrl(const QUrl &start_url);
 	void removeStartUrl(const QUrl &start_url);
 	const QList<QUrl> &startUrls() const;
+
+	void addAllowedUrlScheme(const QString &allowed_url_scheme);
+	void removeAllowedUrlScheme(const QString &allowed_url_scheme);
+	const QSet<QString> &allowedUrlSchemes() const;
 
 	void addBlacklistedHost(const QString &blacklisted_host);
 	void removeBlacklistedHost(const QString &blacklisted_host);
 	const QSet<QString> &blacklistedHosts() const;
 
-	void addCrawlingZone(const QUrl &crawling_zone);
-	void removeCrawlingZone(const QUrl &crawling_zone);
+	void addCrawlingZone(const QString &crawling_zone);
+	void removeCrawlingZone(const QString &crawling_zone);
 	const QHash<QString, QStringList> &crawlingZones()const;
+
+	bool urlSchemeAllowed(const QUrl &url) const;
+	bool urlHostAllowed(const QUrl &url) const;
+	bool urlZoneAllowed(const QUrl &url) const;
 
 	int loadSettingsFromJsonFile(const QString &path_to_file);
 	int saveSettingsToJsonFile(const QString &path_to_file) const;

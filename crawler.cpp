@@ -151,44 +151,24 @@ void Crawler::addURLToQueue(const QUrl &url)
 		qDebug() << "Skipping visited page";
 		return;
 	}
-	const QString lowerHost=urlAdjusted.host().toLower();
-	if(gSettings->blacklistedHosts().contains(lowerHost))
-	{
-		qDebug() << "Skipping blacklisted host";
-		return;
-	}
-	if(gSettings->crawlingZones().contains(lowerHost))
-	{
-		bool allowedByZonePrefix=0;
-		const QStringList &zonePrefixes=gSettings->crawlingZones()[lowerHost];
-		for(const QString &zonePrefix : zonePrefixes)
-		{
-			if(!zonePrefix.isEmpty())
-			{
-				if(urlAdjusted.toString().startsWith(zonePrefix))
-				{
-					allowedByZonePrefix=1;
-					break;
-				}
-			}
-		}
-		if(!allowedByZonePrefix)
-		{
-			qDebug() << "Skipping page outside crawling zone";
-			return;
-		}
-	}
-	if(!gSettings->allowedUrlSchemes().isEmpty())
-	{
-		if(!gSettings->allowedUrlSchemes().contains(urlAdjusted.scheme()))
-		{
-			qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
-			return;
-		}
-	}
 	if(mQueuedURLsHashes.contains(urlHash))
 	{
 		qDebug() << "Skipping duplicate URL";
+		return;
+	}
+	if(!gSettings->urlSchemeAllowed(urlAdjusted))
+	{
+		qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
+		return;
+	}
+	if(!gSettings->urlHostAllowed(urlAdjusted))
+	{
+		qDebug() << "Skipping page from blacklisted host";
+		return;
+	}
+	if(!gSettings->urlZoneAllowed(urlAdjusted))
+	{
+		qDebug() << "Skipping page outside crawling zone";
 		return;
 	}
 	qDebug() << "Adding URL to the processing list";

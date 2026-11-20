@@ -26,32 +26,21 @@ ForbiddenUrlRequestInterceptor::ForbiddenUrlRequestInterceptor(QObject *parent) 
 
 void ForbiddenUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
-	const QString lowerHost=info.requestUrl().host().toLower();
-	if(gSettings->blacklistedHosts().contains(lowerHost))
+	QUrl urlAdjusted=info.requestUrl().adjusted(QUrl::RemoveFragment);
+	if(!gSettings->urlSchemeAllowed(urlAdjusted))
 	{
 		info.block(true);
 		return;
 	}
-	if(gSettings->crawlingZones().contains(lowerHost))
+	if(!gSettings->urlHostAllowed(urlAdjusted))
 	{
-		bool allowedByZonePrefix=0;
-		const QStringList &zonePrefixes=gSettings->crawlingZones()[lowerHost];
-		for(const QString &zonePrefix : zonePrefixes)
-		{
-			if(!zonePrefix.isEmpty())
-			{
-				if(info.requestUrl().toString().startsWith(zonePrefix))
-				{
-					allowedByZonePrefix=1;
-					break;
-				}
-			}
-		}
-		if(!allowedByZonePrefix)
-		{
-			info.block(true);
-			return;
-		}
+		info.block(true);
+		return;
+	}
+	if(!gSettings->urlZoneAllowed(urlAdjusted))
+	{
+		info.block(true);
+		return;
 	}
 }
 
