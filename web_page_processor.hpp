@@ -9,11 +9,11 @@
 #include <QTimer>
 #include <QObject>
 
-class BlacklistedHostRequestInterceptor : public QWebEngineUrlRequestInterceptor
+class ForbiddenUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
 {
 	Q_OBJECT
 public:
-	BlacklistedHostRequestInterceptor(QObject *parent=nullptr);
+	ForbiddenUrlRequestInterceptor(QObject *parent=nullptr);
 	void interceptRequest(QWebEngineUrlRequestInfo &info) override;
 };
 
@@ -23,7 +23,7 @@ class WebPageProcessor : public QObject
 	QWebEnginePage *mWebPage=nullptr;
 	QWebEngineProfile *mProfile=nullptr;
 	QWebEngineView *mWebViewWidget=nullptr;
-	BlacklistedHostRequestInterceptor *mBlacklistedHostRequestInterceptor=nullptr;
+	ForbiddenUrlRequestInterceptor *mForbiddenUrlRequestInterceptor=nullptr;
 	QTimer *mJSCompletionTimer=nullptr;
 	QString mPageContentHTML;
 	QString mPageContentTEXT;

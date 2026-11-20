@@ -20,15 +20,38 @@
 #include "web_page_processor.hpp"
 #include "chromium_cookie.hpp"
 
-BlacklistedHostRequestInterceptor::BlacklistedHostRequestInterceptor(QObject *parent) : QWebEngineUrlRequestInterceptor(parent)
+ForbiddenUrlRequestInterceptor::ForbiddenUrlRequestInterceptor(QObject *parent) : QWebEngineUrlRequestInterceptor(parent)
 {
 }
 
-void BlacklistedHostRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
+void ForbiddenUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
-	if(gSettings->blacklistedHosts().contains(info.requestUrl().host().toLower()))
+	const QString lowerHost=info.requestUrl().host().toLower();
+	if(gSettings->blacklistedHosts().contains(lowerHost))
 	{
 		info.block(true);
+		return;
+	}
+	if(gSettings->crawlingZones().contains(lowerHost))
+	{
+		bool allowedByZonePrefix=0;
+		const QStringList &zonePrefixes=gSettings->crawlingZones()[lowerHost];
+		for(const QString &zonePrefix : zonePrefixes)
+		{
+			if(!zonePrefix.isEmpty())
+			{
+				if(info.requestUrl().toString().startsWith(zonePrefix))
+				{
+					allowedByZonePrefix=1;
+					break;
+				}
+			}
+		}
+		if(!allowedByZonePrefix)
+		{
+			info.block(true);
+			return;
+		}
 	}
 }
 
@@ -159,8 +182,8 @@ WebPageProcessor::WebPageProcessor(QObject *parent) : QObject(parent)
 		mProfile->setHttpUserAgent(gSettings->httpUserAgent());
 	}
 	mProfile->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, gSettings->loadImages());
-	mBlacklistedHostRequestInterceptor=new BlacklistedHostRequestInterceptor(this);
-	mProfile->setUrlRequestInterceptor(mBlacklistedHostRequestInterceptor);
+	mForbiddenUrlRequestInterceptor=new ForbiddenUrlRequestInterceptor(this);
+	mProfile->setUrlRequestInterceptor(mForbiddenUrlRequestInterceptor);
 	mWebPage=new QWebEnginePage(mProfile);
 	mWebViewWidget=new QWebEngineView(mProfile);
 	mWebViewWidget->setPage(mWebPage);

@@ -146,58 +146,54 @@ void Crawler::addURLToQueue(const QUrl &url)
 	QUrl urlAdjusted=url.adjusted(QUrl::RemoveFragment);
 	Hash128 urlHash=xorshiftstar_hash_128(urlAdjusted.toEncoded());
 	qDebug() << urlAdjusted.toEncoded();
-	bool skipThisURL=false;
-	if(gSettings->blacklistedHosts().contains(urlAdjusted.host().toLower()))
+	if(mVisitedURLsHashes.contains(urlHash))
 	{
-		skipThisURL=true;
-		qDebug() << "Skipping blacklisted host";
-	}
-	else if(mVisitedURLsHashes.contains(urlHash))
-	{
-		skipThisURL=true;
 		qDebug() << "Skipping visited page";
+		return;
 	}
-	bool urlAllowedByZonePrefix=1;
-	if(gSettings->crawlingZones().contains(urlAdjusted.host()))
+	const QString lowerHost=urlAdjusted.host().toLower();
+	if(gSettings->blacklistedHosts().contains(lowerHost))
 	{
-		urlAllowedByZonePrefix=0;
-		const QStringList &zonePrefixList=gSettings->crawlingZones()[urlAdjusted.host()];
-		for(const QString &zonePrefix : zonePrefixList)
+		qDebug() << "Skipping blacklisted host";
+		return;
+	}
+	if(gSettings->crawlingZones().contains(lowerHost))
+	{
+		bool allowedByZonePrefix=0;
+		const QStringList &zonePrefixes=gSettings->crawlingZones()[lowerHost];
+		for(const QString &zonePrefix : zonePrefixes)
 		{
 			if(!zonePrefix.isEmpty())
 			{
 				if(urlAdjusted.toString().startsWith(zonePrefix))
 				{
-					urlAllowedByZonePrefix=1;
+					allowedByZonePrefix=1;
 					break;
 				}
 			}
 		}
-	}
-	if(!urlAllowedByZonePrefix)
-	{
-		skipThisURL=true;
-		qDebug() << "Skipping page outside crawling zone";
+		if(!allowedByZonePrefix)
+		{
+			qDebug() << "Skipping page outside crawling zone";
+			return;
+		}
 	}
 	if(!gSettings->allowedUrlSchemes().isEmpty())
 	{
 		if(!gSettings->allowedUrlSchemes().contains(urlAdjusted.scheme()))
 		{
-			skipThisURL=true;
 			qDebug() << "Skipping URL due to inacceptable scheme:" << urlAdjusted.scheme();
+			return;
 		}
 	}
 	if(mQueuedURLsHashes.contains(urlHash))
 	{
-		skipThisURL=true;
 		qDebug() << "Skipping duplicate URL";
+		return;
 	}
-	if(skipThisURL!=true)
-	{
-		mURLListQueued->append(urlAdjusted);
-		mQueuedURLsHashes.insert(urlHash);
-		qDebug() << "Adding URL to the processing list";
-	}
+	qDebug() << "Adding URL to the processing list";
+	mURLListQueued->append(urlAdjusted);
+	mQueuedURLsHashes.insert(urlHash);
 }
 
 void Crawler::markURLAsVisited(const QUrl &url)
