@@ -1,8 +1,31 @@
 #include <QFile>
+#include <QSaveFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include "configuration_keeper.hpp"
+
+ConfigurationKeeper::ConfigurationKeeper()
+{
+	setHttpCacheSize(mHttpCacheSize);
+	setHttpUserAgent(mHttpUserAgent);
+	setDatabaseDirectory(mDatabaseDirectory);
+	setFirefoxProfileDirectory(mFirefoxProfileDirectory);
+	setChromiumProfileDirectory(mChromiumProfileDirectory);
+	setWindowSize(QSize(0, 0));
+	setJsCompletionTimeout(mJsCompletionTimeout);
+	setPageLoadingIntervalMin(mPageLoadingIntervalMin);
+	setPageLoadingIntervalMax(mPageLoadingIntervalMax);
+	setPagesPerSession(mPagesPerSession);
+	setShowBrowserWindow(mShowBrowserWindow);
+	setRemoteDebuggingPort(mRemoteDebuggingPort);
+	setRemoteDebuggingEnabled(mRemoteDebuggingEnabled);
+	setLoadImages(mLoadImages);
+	mSettingsJson["start_urls"]=QJsonArray();
+	mSettingsJson["allowed_url_schemes"]=QJsonArray();
+	mSettingsJson["black_list"]=QJsonArray();
+	mSettingsJson["crawling_zones"]=QJsonArray();
+}
 
 void ConfigurationKeeper::setHttpCacheSize(int cache_size)
 {
@@ -11,6 +34,7 @@ void ConfigurationKeeper::setHttpCacheSize(int cache_size)
 		cache_size=0;
 	}
 	mHttpCacheSize=cache_size;
+	mSettingsJson["http_cache_size"]=mHttpCacheSize;
 }
 
 int ConfigurationKeeper::httpCacheSize() const
@@ -21,6 +45,7 @@ int ConfigurationKeeper::httpCacheSize() const
 void ConfigurationKeeper::setHttpUserAgent(const QString &user_agent)
 {
 	mHttpUserAgent=user_agent;
+	mSettingsJson["http_user_agent"]=mHttpUserAgent;
 }
 
 const QString &ConfigurationKeeper::httpUserAgent() const
@@ -31,6 +56,7 @@ const QString &ConfigurationKeeper::httpUserAgent() const
 void ConfigurationKeeper::setDatabaseDirectory(const QString &database_directory)
 {
 	mDatabaseDirectory=database_directory;
+	mSettingsJson["database_directory"]=mDatabaseDirectory;
 }
 
 const QString &ConfigurationKeeper::databaseDirectory() const
@@ -41,6 +67,7 @@ const QString &ConfigurationKeeper::databaseDirectory() const
 void ConfigurationKeeper::setFirefoxProfileDirectory(const QString &firefox_profile_directory)
 {
 	mFirefoxProfileDirectory=firefox_profile_directory;
+	mSettingsJson["firefox_profile_directory"]=mFirefoxProfileDirectory;
 }
 
 const QString &ConfigurationKeeper::firefoxProfileDirectory() const
@@ -51,6 +78,7 @@ const QString &ConfigurationKeeper::firefoxProfileDirectory() const
 void ConfigurationKeeper::setChromiumProfileDirectory(const QString &chromium_profile_directory)
 {
 	mChromiumProfileDirectory=chromium_profile_directory;
+	mSettingsJson["chromium_profile_directory"]=mChromiumProfileDirectory;
 }
 
 const QString &ConfigurationKeeper::chromiumProfileDirectory() const
@@ -65,6 +93,7 @@ void ConfigurationKeeper::setWindowWidth(int window_width)
 		window_width=0;
 	}
 	mCrawlerWindowSize.setWidth(window_width);
+	mSettingsJson["window_width"]=mCrawlerWindowSize.width();
 }
 
 void ConfigurationKeeper::setWindowHeight(int window_height)
@@ -74,19 +103,13 @@ void ConfigurationKeeper::setWindowHeight(int window_height)
 		window_height=0;
 	}
 	mCrawlerWindowSize.setHeight(window_height);
+	mSettingsJson["window_height"]=mCrawlerWindowSize.height();
 }
 
 void ConfigurationKeeper::setWindowSize(QSize window_size)
 {
-	if(window_size.width()<0)
-	{
-		window_size.setWidth(0);
-	}
-	if(window_size.height()<0)
-	{
-		window_size.setHeight(0);
-	}
-	mCrawlerWindowSize=window_size;
+	setWindowWidth(window_size.width());
+	setWindowHeight(window_size.height());
 }
 
 const QSize &ConfigurationKeeper::windowSize() const
@@ -101,6 +124,7 @@ void ConfigurationKeeper::setJsCompletionTimeout(int js_completion_timeout)
 		js_completion_timeout=10;
 	}
 	mJsCompletionTimeout=js_completion_timeout;
+	mSettingsJson["js_completion_timeout"]=mJsCompletionTimeout;
 }
 
 int ConfigurationKeeper::jsCompletionTimeout() const
@@ -119,6 +143,8 @@ void ConfigurationKeeper::setPageLoadingIntervalMin(int page_loading_interval_mi
 	{
 		mPageLoadingIntervalMax=page_loading_interval_min;
 	}
+	mSettingsJson["page_loading_interval_min"]=mPageLoadingIntervalMin;
+	mSettingsJson["page_loading_interval_max"]=mPageLoadingIntervalMax;
 }
 
 int ConfigurationKeeper::pageLoadingIntervalMin() const
@@ -137,6 +163,8 @@ void ConfigurationKeeper::setPageLoadingIntervalMax(int page_loading_interval_ma
 	{
 		mPageLoadingIntervalMin=page_loading_interval_max;
 	}
+	mSettingsJson["page_loading_interval_min"]=mPageLoadingIntervalMin;
+	mSettingsJson["page_loading_interval_max"]=mPageLoadingIntervalMax;
 }
 
 int ConfigurationKeeper::pageLoadingIntervalMax() const
@@ -151,6 +179,7 @@ void ConfigurationKeeper::setPagesPerSession(int pages_per_session)
 		pages_per_session=-1;
 	}
 	mPagesPerSession=pages_per_session;
+	mSettingsJson["pages_per_session"]=mPagesPerSession;
 }
 
 int ConfigurationKeeper::pagesPerSession() const
@@ -169,6 +198,7 @@ void ConfigurationKeeper::setShowBrowserWindow(int show_browser_window)
 		show_browser_window=2;
 	}
 	mShowBrowserWindow=show_browser_window;
+	mSettingsJson["show_browser_window"]=mShowBrowserWindow;
 }
 
 int ConfigurationKeeper::showBrowserWindow() const
@@ -187,6 +217,7 @@ void ConfigurationKeeper::setRemoteDebuggingPort(int remote_debugging_port)
 		remote_debugging_port=65535;
 	}
 	mRemoteDebuggingPort=remote_debugging_port;
+	mSettingsJson["remote_debugging_port"]=mRemoteDebuggingPort;
 }
 
 int ConfigurationKeeper::remoteDebuggingPort() const
@@ -197,6 +228,7 @@ int ConfigurationKeeper::remoteDebuggingPort() const
 void ConfigurationKeeper::setRemoteDebuggingEnabled(bool remote_debugging_enabled)
 {
 	mRemoteDebuggingEnabled=remote_debugging_enabled;
+	mSettingsJson["remote_debugging_enabled"]=mRemoteDebuggingEnabled;
 }
 
 bool ConfigurationKeeper::remoteDebuggingEnabled() const
@@ -207,11 +239,33 @@ bool ConfigurationKeeper::remoteDebuggingEnabled() const
 void ConfigurationKeeper::setLoadImages(bool load_images)
 {
 	mLoadImages=load_images;
+	mSettingsJson["load_images"]=mLoadImages;
 }
 
 bool ConfigurationKeeper::loadImages() const
 {
 	return mLoadImages;
+}
+
+void ConfigurationKeeper::appendJsonEntry(const QString &key, const QString &entry)
+{
+	QJsonArray entries=mSettingsJson.take(key).toArray();
+	entries.append(entry);
+	mSettingsJson.insert(key, entries);
+}
+
+void ConfigurationKeeper::removeJsonEntry(const QString &key, const QString &entry)
+{
+	QJsonArray entries=mSettingsJson.take(key).toArray();
+	for(qsizetype index=0; index<entries.size(); ++index)
+	{
+		if(entries.at(index)==entry)
+		{
+			entries.removeAt(index);
+			break;
+		}
+	}
+	mSettingsJson.insert(key, entries);
 }
 
 void ConfigurationKeeper::addStartUrl(const QUrl &start_url)
@@ -223,12 +277,18 @@ void ConfigurationKeeper::addStartUrl(const QUrl &start_url)
 	if(!mStartUrls.contains(start_url))
 	{
 		mStartUrls.append(start_url);
+		appendJsonEntry("start_urls", start_url.toString(QUrl::FullyEncoded));
 	}
 }
 
 void ConfigurationKeeper::removeStartUrl(const QUrl &start_url)
 {
-	mStartUrls.removeAll(start_url);
+	const qsizetype index=mStartUrls.indexOf(start_url);
+	if(index>=0)
+	{
+		removeJsonEntry("start_urls", mStartUrls.at(index).toString(QUrl::FullyEncoded));
+		mStartUrls.removeAt(index);
+	}
 }
 
 const QList<QUrl> &ConfigurationKeeper::startUrls() const
@@ -243,7 +303,11 @@ void ConfigurationKeeper::addAllowedUrlScheme(const QString &allowed_url_scheme)
 		return;
 	}
 	const QString lowerSchemeString=allowed_url_scheme.toLower();
-	mAllowedURLSchemes.insert(lowerSchemeString);
+	if(!mAllowedURLSchemes.contains(lowerSchemeString))
+	{
+		mAllowedURLSchemes.insert(lowerSchemeString);
+		appendJsonEntry("allowed_url_schemes", lowerSchemeString);
+	}
 }
 
 void ConfigurationKeeper::removeAllowedUrlScheme(const QString &allowed_url_scheme)
@@ -253,7 +317,10 @@ void ConfigurationKeeper::removeAllowedUrlScheme(const QString &allowed_url_sche
 		return;
 	}
 	const QString lowerSchemeString=allowed_url_scheme.toLower();
-	mAllowedURLSchemes.remove(lowerSchemeString);
+	if(mAllowedURLSchemes.remove(lowerSchemeString))
+	{
+		removeJsonEntry("allowed_url_schemes", lowerSchemeString);
+	}
 }
 
 const QSet<QString> &ConfigurationKeeper::allowedUrlSchemes() const
@@ -268,7 +335,11 @@ void ConfigurationKeeper::addBlacklistedHost(const QString &blacklisted_host)
 		return;
 	}
 	const QString lowerHostString=blacklisted_host.toLower();
-	mBlacklistedHosts.insert(lowerHostString);
+	if(!mBlacklistedHosts.contains(lowerHostString))
+	{
+		mBlacklistedHosts.insert(lowerHostString);
+		appendJsonEntry("black_list", lowerHostString);
+	}
 }
 
 void ConfigurationKeeper::removeBlacklistedHost(const QString &blacklisted_host)
@@ -278,7 +349,10 @@ void ConfigurationKeeper::removeBlacklistedHost(const QString &blacklisted_host)
 		return;
 	}
 	const QString lowerHostString=blacklisted_host.toLower();
-	mBlacklistedHosts.remove(lowerHostString);
+	if(mBlacklistedHosts.remove(lowerHostString))
+	{
+		removeJsonEntry("black_list", lowerHostString);
+	}
 }
 
 const QSet<QString> &ConfigurationKeeper::blacklistedHosts() const
@@ -301,6 +375,7 @@ void ConfigurationKeeper::addCrawlingZone(const QString &crawling_zone)
 	if(!mCrawlingZones[zoneURL.host()].contains(lowerZoneString))
 	{
 		mCrawlingZones[zoneURL.host()].append(lowerZoneString);
+		appendJsonEntry("crawling_zones", lowerZoneString);
 	}
 }
 
@@ -316,7 +391,10 @@ void ConfigurationKeeper::removeCrawlingZone(const QString &crawling_zone)
 	{
 		return;
 	}
-	mCrawlingZones[zoneURL.host()].removeAll(lowerZoneString);
+	if(mCrawlingZones[zoneURL.host()].removeAll(lowerZoneString)>0)
+	{
+		removeJsonEntry("crawling_zones", lowerZoneString);
+	}
 	if(mCrawlingZones[zoneURL.host()].isEmpty())
 	{
 		mCrawlingZones.remove(zoneURL.host());
@@ -468,6 +546,7 @@ int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		const QJsonArray &allowedUrlSchemes=configJsonObject.value("allowed_url_schemes").toArray();
 		mAllowedURLSchemes.clear();
+		mSettingsJson["allowed_url_schemes"]=QJsonArray();
 		for(const QJsonValue &allowedUrlScheme : allowedUrlSchemes)
 		{
 			if(allowedUrlScheme.isString())
@@ -481,6 +560,7 @@ int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		const QJsonArray &startUrls=configJsonObject.value("start_urls").toArray();
 		mStartUrls.clear();
+		mSettingsJson["start_urls"]=QJsonArray();
 		for(const QJsonValue &startUrl : startUrls)
 		{
 			if(startUrl.isString())
@@ -494,6 +574,7 @@ int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		const QJsonArray &blacklistedHosts=configJsonObject.value("black_list").toArray();
 		mBlacklistedHosts.clear();
+		mSettingsJson["black_list"]=QJsonArray();
 		for(const QJsonValue &blacklistedHost : blacklistedHosts)
 		{
 			if(blacklistedHost.isString())
@@ -507,6 +588,7 @@ int ConfigurationKeeper::loadSettingsFromJsonFile(const QString &path_to_file)
 	{
 		const QJsonArray &crawlingZones=configJsonObject.value("crawling_zones").toArray();
 		mCrawlingZones.clear();
+		mSettingsJson["crawling_zones"]=QJsonArray();
 		for(const QJsonValue &crawlingZone : crawlingZones)
 		{
 			if(crawlingZone.isString())
@@ -525,12 +607,15 @@ int ConfigurationKeeper::saveSettingsToJsonFile(const QString &path_to_file) con
 	{
 		return(EXIT_FAILURE);
 	}
-	QFile configFile(path_to_file);
+	QSaveFile configFile(path_to_file);
 	if(!configFile.open(QIODevice::WriteOnly))
 	{
 		return(EXIT_FAILURE);
 	}
-	uint64_t WIP; // TODO: save as JSON
-	configFile.close();
+	const QByteArray data=QJsonDocument(mSettingsJson).toJson(QJsonDocument::JsonFormat::Indented);
+	if(configFile.write(data)!=data.size() || !configFile.commit())
+	{
+		return(EXIT_FAILURE);
+	}
 	return(EXIT_SUCCESS);
 }

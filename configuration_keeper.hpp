@@ -3,11 +3,13 @@
 
 #include <QSize>
 #include <QHash>
+#include <QJsonObject>
 #include <QSet>
 #include <QUrl>
 
 class ConfigurationKeeper
 {
+	QJsonObject mSettingsJson;
 	QString mHttpUserAgent;
 	QString mDatabaseDirectory;
 	QString mFirefoxProfileDirectory;
@@ -26,8 +28,12 @@ class ConfigurationKeeper
 	QSet<QString> mAllowedURLSchemes;
 	QSet<QString> mBlacklistedHosts;
 	QHash<QString, QStringList> mCrawlingZones;
+	void appendJsonEntry(const QString &key, const QString &entry);
+	void removeJsonEntry(const QString &key, const QString &entry);
 
 public:
+	ConfigurationKeeper();
+
 	void setHttpCacheSize(int cache_size);
 	int httpCacheSize() const;
 
