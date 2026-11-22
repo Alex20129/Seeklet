@@ -240,13 +240,25 @@ void Indexer::addPage(const PageMetadata &page_metadata)
 			return;
 		}
 	}
-	PageMetadata *newPageMetaData=new PageMetadata(page_metadata);
-	Hash128 newUrlHash=xorshiftstar_hash_128(newPageMetaData->url);
-	if(mIndexByContentHash.contains(newPageMetaData->contentHash))
+	if(mIndexByContentHash.contains(page_metadata.contentHash))
 	{
-		PageMetadata *oldPageMetaData=mIndexByContentHash.value(newPageMetaData->contentHash);
+		PageMetadata *oldPageMetaData=mIndexByContentHash.value(page_metadata.contentHash);
+		if(oldPageMetaData->url==page_metadata.url)
+		{
+			if(page_metadata.timeStamp<oldPageMetaData->timeStamp)
+			{
+				return;
+			}
+			if(oldPageMetaData->tfAsHashes==page_metadata.tfAsHashes)
+			{
+				oldPageMetaData->timeStamp=page_metadata.timeStamp;
+				return;
+			}
+		}
 		deletePage(oldPageMetaData);
 	}
+	PageMetadata *newPageMetaData=new PageMetadata(page_metadata);
+	Hash128 newUrlHash=xorshiftstar_hash_128(newPageMetaData->url);
 	if(mIndexByUrlHash.contains(newUrlHash))
 	{
 		PageMetadata *oldPageMetaData=mIndexByUrlHash.value(newUrlHash);
